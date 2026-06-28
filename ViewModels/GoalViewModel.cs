@@ -37,10 +37,6 @@ namespace QuanLyTaiChinhCaNhan_Nhom06.ViewModels
             CompletedGoals = new ObservableCollection<GoalOverview>();
 
             SaveCommand = new AsyncRelayCommand(_ => SaveAsync());
-
-            // Sửa lỗi nút bị khóa:
-            // Không dùng điều kiện _ => SelectedGoal != null ở đây,
-            // vì AsyncRelayCommand hiện tại không tự cập nhật lại CanExecute khi SelectedGoal thay đổi.
             DeleteCommand = new AsyncRelayCommand(_ => DeleteAsync());
             AddMoneyCommand = new AsyncRelayCommand(_ => AddMoneyAsync());
 
