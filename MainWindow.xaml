@@ -1,0 +1,274 @@
+<Window x:Class="QuanLyTaiChinhCaNhan_Nhom06.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes"
+        xmlns:views="clr-namespace:QuanLyTaiChinhCaNhan_Nhom06.Views"
+        xmlns:vm="clr-namespace:QuanLyTaiChinhCaNhan_Nhom06.ViewModels"
+        Title="MoneyFlow - Quản lý tài chính cá nhân"
+        Height="820"
+        Width="1280"
+        WindowStartupLocation="CenterScreen"
+        Background="{DynamicResource BackgroundBrush}"
+        MinWidth="1000"
+        MinHeight="720">
+
+    <Window.Resources>
+        <DataTemplate DataType="{x:Type vm:LoginViewModel}">
+            <views:LoginView/>
+        </DataTemplate>
+        <DataTemplate DataType="{x:Type vm:RegisterViewModel}">
+            <views:RegisterView/>
+        </DataTemplate>
+        <DataTemplate DataType="{x:Type vm:DashboardViewModel}">
+            <views:DashboardView/>
+        </DataTemplate>
+        <DataTemplate DataType="{x:Type vm:TransactionViewModel}">
+            <views:TransactionView/>
+        </DataTemplate>
+        <DataTemplate DataType="{x:Type vm:CategoryViewModel}">
+            <views:CategoryView/>
+        </DataTemplate>
+        <DataTemplate DataType="{x:Type vm:BudgetViewModel}">
+            <views:BudgetView/>
+        </DataTemplate>
+        <DataTemplate DataType="{x:Type vm:GoalViewModel}">
+            <views:GoalView/>
+        </DataTemplate>
+        <DataTemplate DataType="{x:Type vm:ProfileViewModel}">
+            <views:ProfileView/>
+        </DataTemplate>
+        <DataTemplate DataType="{x:Type vm:ReportViewModel}">
+            <views:ReportView/>
+        </DataTemplate>
+    </Window.Resources>
+
+    <Grid Background="{DynamicResource BackgroundGradient}">
+
+        <Ellipse Width="420"
+                 Height="420"
+                 Fill="#C4B5FD"
+                 Opacity="0.24"
+                 HorizontalAlignment="Left"
+                 VerticalAlignment="Top"
+                 Margin="-120,-90,0,0">
+            <Ellipse.Effect>
+                <BlurEffect Radius="100"/>
+            </Ellipse.Effect>
+        </Ellipse>
+
+        <Ellipse Width="420"
+                 Height="420"
+                 Fill="#67E8F9"
+                 Opacity="0.22"
+                 HorizontalAlignment="Right"
+                 VerticalAlignment="Bottom"
+                 Margin="0,0,-110,-80">
+            <Ellipse.Effect>
+                <BlurEffect Radius="100"/>
+            </Ellipse.Effect>
+        </Ellipse>
+
+        <Grid x:Name="AuthShell">
+            <Grid.Style>
+                <Style TargetType="Grid">
+                    <Setter Property="Visibility" Value="Visible"/>
+                    <Style.Triggers>
+                        <DataTrigger Binding="{Binding IsAuthenticated}" Value="True">
+                            <Setter Property="Visibility" Value="Collapsed"/>
+                        </DataTrigger>
+                    </Style.Triggers>
+                </Style>
+            </Grid.Style>
+            <ContentControl Content="{Binding CurrentViewModel}"/>
+        </Grid>
+
+        <Grid x:Name="AppShell">
+            <Grid.Style>
+                <Style TargetType="Grid">
+                    <Setter Property="Visibility" Value="Collapsed"/>
+                    <Style.Triggers>
+                        <DataTrigger Binding="{Binding IsAuthenticated}" Value="True">
+                            <Setter Property="Visibility" Value="Visible"/>
+                        </DataTrigger>
+                    </Style.Triggers>
+                </Style>
+            </Grid.Style>
+
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="292"/>
+                <ColumnDefinition Width="*"/>
+            </Grid.ColumnDefinitions>
+
+            <Border Grid.Column="0"
+                    Background="{DynamicResource SidebarGradient}"
+                    Padding="22"
+                    BorderBrush="#E2E8F0"
+                    BorderThickness="0,0,1,0">
+
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="*"/>
+                        <RowDefinition Height="Auto"/>
+                    </Grid.RowDefinitions>
+
+                    <StackPanel Grid.Row="0" Orientation="Horizontal" Margin="0,0,0,34">
+                        <Border Width="50" Height="50" CornerRadius="15" Background="{DynamicResource PrimaryGradient}">
+                            <materialDesign:PackIcon Kind="Wallet"
+                                                     Width="28"
+                                                     Height="28"
+                                                     Foreground="White"
+                                                     HorizontalAlignment="Center"
+                                                     VerticalAlignment="Center"/>
+                        </Border>
+
+                        <StackPanel Margin="14,0,0,0" VerticalAlignment="Center">
+                            <TextBlock Text="MoneyFlow" FontSize="22" FontWeight="Bold">
+                                <TextBlock.Foreground>
+                                    <LinearGradientBrush StartPoint="0,0" EndPoint="1,0">
+                                        <GradientStop Color="#06B6D4" Offset="0"/>
+                                        <GradientStop Color="#10B981" Offset="1"/>
+                                    </LinearGradientBrush>
+                                </TextBlock.Foreground>
+                            </TextBlock>
+                            <TextBlock Text="{DynamicResource AppSubtitleText}"
+                                       FontSize="12"
+                                       Foreground="{DynamicResource SecondaryTextBrush}"/>
+                        </StackPanel>
+                    </StackPanel>
+
+                    <StackPanel Grid.Row="1">
+                        <TextBlock Text="{DynamicResource MenuText}"
+                                   Foreground="{DynamicResource LightTextBrush}"
+                                   FontWeight="SemiBold"
+                                   Margin="14,0,0,12"
+                                   FontSize="11"/>
+
+                        <Button Style="{StaticResource SidebarButton}" Command="{Binding NavigateCommand}" CommandParameter="Dashboard">
+                            <StackPanel Orientation="Horizontal">
+                                <materialDesign:PackIcon Kind="ViewDashboard" Margin="0,0,12,0" Width="21" Height="21" Foreground="{DynamicResource PrimaryBrush}"/>
+                                <TextBlock Text="{DynamicResource NavDashboardText}" Foreground="{DynamicResource SecondaryTextBrush}"/>
+                            </StackPanel>
+                        </Button>
+
+                        <Button Style="{StaticResource SidebarButton}" Command="{Binding NavigateCommand}" CommandParameter="Transactions">
+                            <StackPanel Orientation="Horizontal">
+                                <materialDesign:PackIcon Kind="SwapHorizontal" Margin="0,0,12,0" Width="21" Height="21" Foreground="{DynamicResource PrimaryBrush}"/>
+                                <TextBlock Text="{DynamicResource NavTransactionsText}" Foreground="{DynamicResource SecondaryTextBrush}"/>
+                            </StackPanel>
+                        </Button>
+
+                        <Button Style="{StaticResource SidebarButton}" Command="{Binding NavigateCommand}" CommandParameter="Categories">
+                            <StackPanel Orientation="Horizontal">
+                                <materialDesign:PackIcon Kind="Shape" Margin="0,0,12,0" Width="21" Height="21" Foreground="{DynamicResource PrimaryBrush}"/>
+                                <TextBlock Text="{DynamicResource NavCategoriesText}" Foreground="{DynamicResource SecondaryTextBrush}"/>
+                            </StackPanel>
+                        </Button>
+
+                        <Button Style="{StaticResource SidebarButton}" Command="{Binding NavigateCommand}" CommandParameter="Reports">
+                            <StackPanel Orientation="Horizontal">
+                                <materialDesign:PackIcon Kind="ChartLine" Margin="0,0,12,0" Width="21" Height="21" Foreground="{DynamicResource PrimaryBrush}"/>
+                                <TextBlock Text="{DynamicResource NavReportsText}" Foreground="{DynamicResource SecondaryTextBrush}"/>
+                            </StackPanel>
+                        </Button>
+
+                        <Button Style="{StaticResource SidebarButton}" Command="{Binding NavigateCommand}" CommandParameter="Budgets">
+                            <StackPanel Orientation="Horizontal">
+                                <materialDesign:PackIcon Kind="PiggyBank" Margin="0,0,12,0" Width="21" Height="21" Foreground="{DynamicResource PrimaryBrush}"/>
+                                <TextBlock Text="{DynamicResource NavBudgetsText}" Foreground="{DynamicResource SecondaryTextBrush}"/>
+                            </StackPanel>
+                        </Button>
+
+                        <Button Style="{StaticResource SidebarButton}" Command="{Binding NavigateCommand}" CommandParameter="Goals">
+                            <StackPanel Orientation="Horizontal">
+                                <materialDesign:PackIcon Kind="Target" Margin="0,0,12,0" Width="21" Height="21" Foreground="{DynamicResource PrimaryBrush}"/>
+                                <TextBlock Text="{DynamicResource NavGoalsText}" Foreground="{DynamicResource SecondaryTextBrush}"/>
+                            </StackPanel>
+                        </Button>
+
+                        <Button Style="{StaticResource SidebarButton}" Command="{Binding NavigateCommand}" CommandParameter="Profile">
+                            <StackPanel Orientation="Horizontal">
+                                <materialDesign:PackIcon Kind="Account" Margin="0,0,12,0" Width="21" Height="21" Foreground="{DynamicResource PrimaryBrush}"/>
+                                <TextBlock Text="{DynamicResource NavProfileText}" Foreground="{DynamicResource SecondaryTextBrush}"/>
+                            </StackPanel>
+                        </Button>
+                    </StackPanel>
+
+                    <StackPanel Grid.Row="2">
+                        <Border Padding="14"
+                                CornerRadius="18"
+                                Background="{DynamicResource SidebarUserBrush}"
+                                BorderBrush="{DynamicResource SidebarUserBorderBrush}"
+                                BorderThickness="1"
+                                Margin="0,0,0,18">
+                            <StackPanel Orientation="Horizontal">
+                                <Border Width="42"
+                                        Height="42"
+                                        CornerRadius="21"
+                                        Background="{DynamicResource PrimaryGradient}">
+                                    <TextBlock Text="NV"
+                                               Foreground="White"
+                                               FontWeight="Bold"
+                                               HorizontalAlignment="Center"
+                                               VerticalAlignment="Center"/>
+                                </Border>
+
+                                <StackPanel Margin="12,0,0,0" VerticalAlignment="Center">
+                                    <TextBlock Text="{Binding CurrentUser.FullName, FallbackValue=Người dùng}"
+                                               Foreground="{DynamicResource PrimaryTextBrush}"
+                                               FontWeight="SemiBold"
+                                               FontSize="13"/>
+                                    <TextBlock Text="{Binding CurrentUser.Username, FallbackValue=Premium User}"
+                                               Foreground="{DynamicResource SecondaryTextBrush}"
+                                               FontSize="12"/>
+                                </StackPanel>
+                            </StackPanel>
+                        </Border>
+
+                        <Button Style="{StaticResource SidebarButton}" Command="{Binding LogoutCommand}">
+                            <StackPanel Orientation="Horizontal">
+                                <materialDesign:PackIcon Kind="Logout" Margin="0,0,12,0" Width="21" Height="21" Foreground="{DynamicResource DangerBrush}"/>
+                                <TextBlock Text="{DynamicResource NavLogoutText}" Foreground="{DynamicResource DangerBrush}"/>
+                            </StackPanel>
+                        </Button>
+                    </StackPanel>
+                </Grid>
+            </Border>
+
+            <Grid Grid.Column="1" Margin="28">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="*"/>
+                </Grid.RowDefinitions>
+
+                <Border Grid.Row="0"
+                        Background="{DynamicResource CardBgBrush}"
+                        Padding="26,20"
+                        CornerRadius="24"
+                        BorderBrush="{DynamicResource BorderBrushSoft}"
+                        BorderThickness="1"
+                        Effect="{StaticResource LightShadow}">
+                    <StackPanel>
+                        <TextBlock Text="{Binding Title}" FontSize="30" FontWeight="Bold">
+                            <TextBlock.Foreground>
+                                <LinearGradientBrush StartPoint="0,0" EndPoint="1,0">
+                                    <GradientStop Color="#06B6D4" Offset="0"/>
+                                    <GradientStop Color="#10B981" Offset="1"/>
+                                </LinearGradientBrush>
+                            </TextBlock.Foreground>
+                        </TextBlock>
+
+                    </StackPanel>
+                </Border>
+
+                <ScrollViewer Grid.Row="1"
+                              VerticalScrollBarVisibility="Auto"
+                              HorizontalScrollBarVisibility="Disabled"
+                              Margin="0,30,0,0"
+                              Padding="0,0,10,18">
+                    <ContentControl Content="{Binding CurrentViewModel}"/>
+                </ScrollViewer>
+            </Grid>
+        </Grid>
+    </Grid>
+</Window>

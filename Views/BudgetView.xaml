@@ -1,0 +1,201 @@
+<UserControl x:Class="QuanLyTaiChinhCaNhan_Nhom06.Views.BudgetView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes">
+    <UserControl.Resources>
+        <Style x:Key="BudgetCard" TargetType="Border">
+            <Setter Property="Background" Value="{DynamicResource CardBgBrush}"/>
+            <Setter Property="BorderBrush" Value="{DynamicResource BorderBrushSoft}"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="CornerRadius" Value="16"/>
+            <Setter Property="Padding" Value="16"/>
+        </Style>
+        <Style x:Key="BudgetActionButton" TargetType="Button" BasedOn="{StaticResource RoundedButton}">
+            <Setter Property="Height" Value="42"/>
+            <Setter Property="MinWidth" Value="104"/>
+            <Setter Property="Padding" Value="18,0"/>
+            <Setter Property="FontSize" Value="12"/>
+            <Setter Property="Margin" Value="8,0,0,0"/>
+        </Style>
+        <Style x:Key="BudgetSecondaryButton" TargetType="Button" BasedOn="{StaticResource SecondaryButton}">
+            <Setter Property="Height" Value="42"/>
+            <Setter Property="MinWidth" Value="92"/>
+            <Setter Property="Padding" Value="18,0"/>
+            <Setter Property="Margin" Value="8,0,0,0"/>
+        </Style>
+    </UserControl.Resources>
+
+    <StackPanel Background="Transparent">
+        <Grid Margin="0,0,0,16">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="Auto"/>
+            </Grid.ColumnDefinitions>
+            <Button Grid.Column="1" Command="{Binding NewCommand}" Style="{StaticResource BudgetActionButton}">
+                <StackPanel Orientation="Horizontal">
+                    <materialDesign:PackIcon Kind="Plus" Width="17" Height="17" Margin="0,0,7,0"/>
+                    <TextBlock Text="Tạo ngân sách"/>
+                </StackPanel>
+            </Button>
+        </Grid>
+
+        <Border Margin="0,0,0,14">
+            <Border.Style>
+                <Style TargetType="Border" BasedOn="{StaticResource BudgetCard}">
+                    <Setter Property="Visibility" Value="Collapsed"/>
+                    <Style.Triggers>
+                        <DataTrigger Binding="{Binding IsEditorOpen}" Value="True">
+                            <Setter Property="Visibility" Value="Visible"/>
+                        </DataTrigger>
+                    </Style.Triggers>
+                </Style>
+            </Border.Style>
+            <StackPanel>
+                <DockPanel Margin="0,0,0,14">
+                    <Button DockPanel.Dock="Right" Content="Đóng" Command="{Binding CancelCommand}" Style="{StaticResource BudgetSecondaryButton}"/>
+                    <TextBlock Text="{Binding EditorTitle}" Foreground="{DynamicResource PrimaryTextBrush}" FontWeight="SemiBold" FontSize="17" VerticalAlignment="Center"/>
+                </DockPanel>
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="2*"/>
+                        <ColumnDefinition Width="14"/>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="14"/>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="14"/>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="14"/>
+                        <ColumnDefinition Width="Auto"/>
+                    </Grid.ColumnDefinitions>
+                    <StackPanel Grid.Column="0">
+                        <TextBlock Text="Danh mục" Style="{StaticResource MutedLabel}" Margin="0,0,0,6"/>
+                        <ComboBox ItemsSource="{Binding Categories}" SelectedItem="{Binding SelectedCategory}" DisplayMemberPath="Name"/>
+                    </StackPanel>
+                    <StackPanel Grid.Column="2">
+                        <TextBlock Text="Hạn mức" Style="{StaticResource MutedLabel}" Margin="0,0,0,6"/>
+                        <TextBox Text="{Binding Amount, UpdateSourceTrigger=PropertyChanged}"/>
+                    </StackPanel>
+                    <StackPanel Grid.Column="4">
+                        <TextBlock Text="Ngày bắt đầu" Style="{StaticResource MutedLabel}" Margin="0,0,0,6"/>
+                        <DatePicker SelectedDate="{Binding StartDate}"/>
+                    </StackPanel>
+                    <StackPanel Grid.Column="6">
+                        <TextBlock Text="Ngày kết thúc" Style="{StaticResource MutedLabel}" Margin="0,0,0,6"/>
+                        <DatePicker SelectedDate="{Binding EndDate}"/>
+                    </StackPanel>
+                    <StackPanel Grid.Column="8" Orientation="Horizontal" VerticalAlignment="Bottom">
+                        <Button Content="Xóa" Command="{Binding DeleteCommand}" Style="{StaticResource DangerButton}" Height="42" Padding="18,0" Margin="0,0,12,0"/>
+                        <Button Content="Lưu" Command="{Binding SaveCommand}" Style="{StaticResource BudgetActionButton}"/>
+                    </StackPanel>
+                </Grid>
+            </StackPanel>
+        </Border>
+
+        <UniformGrid Columns="3" Margin="0,0,0,14">
+            <Border Style="{StaticResource BudgetCard}" Margin="0,0,12,0">
+                <DockPanel>
+                    <Border DockPanel.Dock="Right" Width="38" Height="38" CornerRadius="12" Background="#0EA5E9">
+                        <materialDesign:PackIcon Kind="CalendarMonth" Foreground="White" Width="19" Height="19" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                    </Border>
+                    <StackPanel>
+                        <TextBlock Text="Tổng ngân sách" Foreground="{DynamicResource SecondaryTextBrush}" FontSize="12"/>
+                        <TextBlock Text="{Binding TotalBudgetText}" Foreground="{DynamicResource PrimaryTextBrush}" FontSize="21" FontWeight="Bold" Margin="0,5,0,0"/>
+                        <TextBlock Text="Hạn mức đang hoạt động" Foreground="{DynamicResource LightTextBrush}" FontSize="11" Margin="0,6,0,0"/>
+                    </StackPanel>
+                </DockPanel>
+            </Border>
+            <Border Style="{StaticResource BudgetCard}" Margin="0,0,12,0">
+                <DockPanel>
+                    <Border DockPanel.Dock="Right" Width="38" Height="38" CornerRadius="12" Background="#FB923C">
+                        <materialDesign:PackIcon Kind="TrendingUp" Foreground="White" Width="19" Height="19" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                    </Border>
+                    <StackPanel>
+                        <TextBlock Text="Đã chi tiêu" Foreground="{DynamicResource SecondaryTextBrush}" FontSize="12"/>
+                        <TextBlock Text="{Binding TotalSpentText}" Foreground="#EF4444" FontSize="21" FontWeight="Bold" Margin="0,5,0,0"/>
+                        <TextBlock Text="{Binding SpentRateText}" Foreground="{DynamicResource LightTextBrush}" FontSize="11" Margin="0,6,0,0"/>
+                    </StackPanel>
+                </DockPanel>
+            </Border>
+            <Border Style="{StaticResource BudgetCard}">
+                <DockPanel>
+                    <Border DockPanel.Dock="Right" Width="38" Height="38" CornerRadius="12" Background="#10B981">
+                        <materialDesign:PackIcon Kind="ShieldCheck" Foreground="White" Width="19" Height="19" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                    </Border>
+                    <StackPanel>
+                        <TextBlock Text="Còn lại" Foreground="{DynamicResource SecondaryTextBrush}" FontSize="12"/>
+                        <TextBlock Text="{Binding RemainingText}" Foreground="#059669" FontSize="21" FontWeight="Bold" Margin="0,5,0,0"/>
+                        <TextBlock Text="Số tiền chưa sử dụng" Foreground="{DynamicResource LightTextBrush}" FontSize="11" Margin="0,6,0,0"/>
+                    </StackPanel>
+                </DockPanel>
+            </Border>
+        </UniformGrid>
+
+        <Border Style="{StaticResource BudgetCard}">
+            <StackPanel>
+                <TextBlock Text="Chi tiết ngân sách" Foreground="{DynamicResource PrimaryTextBrush}" FontWeight="SemiBold" FontSize="16" Margin="0,0,0,12"/>
+                <Grid>
+                    <ItemsControl ItemsSource="{Binding BudgetOverviews}">
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate>
+                                <Border Background="{DynamicResource MutedCardBrush}" CornerRadius="13" Padding="13" Margin="0,0,0,10">
+                                    <StackPanel>
+                                        <DockPanel Margin="0,0,0,8">
+                                            <Button DockPanel.Dock="Right"
+                                                    Command="{Binding DataContext.EditCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                                    CommandParameter="{Binding}"
+                                                    Content="Chỉnh sửa"
+                                                    Style="{StaticResource BudgetSecondaryButton}"
+                                                    Height="30"
+                                                    Padding="10,0"/>
+                                            <StackPanel Orientation="Horizontal">
+                                                <Ellipse Width="9" Height="9" Fill="{Binding AccentBrush}" Margin="0,0,8,0"/>
+                                                <TextBlock Text="{Binding Name}" Foreground="{DynamicResource PrimaryTextBrush}" FontWeight="SemiBold" FontSize="13" VerticalAlignment="Center"/>
+                                            </StackPanel>
+                                        </DockPanel>
+                                        <Grid Margin="0,0,0,6">
+                                            <TextBlock Text="{Binding ProgressText}" Foreground="{Binding StatusBrush}" FontSize="11"/>
+                                            <TextBlock Text="{Binding SpentText}" Foreground="{DynamicResource SecondaryTextBrush}" FontSize="11" HorizontalAlignment="Right">
+                                                <TextBlock.ToolTip>
+                                                    <TextBlock Text="{Binding PeriodText}"/>
+                                                </TextBlock.ToolTip>
+                                            </TextBlock>
+                                        </Grid>
+                                        <ProgressBar Value="{Binding UsedPercent, Mode=OneWay}" Maximum="100" Height="7" Background="{DynamicResource BorderBrushSoft}" Foreground="{Binding ProgressBrush}"/>
+                                        <Grid Margin="0,7,0,0">
+                                            <TextBlock Foreground="{DynamicResource SecondaryTextBrush}" FontSize="11">
+                                                <Run Text="Hạn mức: "/>
+                                                <Run Text="{Binding AmountText, Mode=OneWay}"/>
+                                            </TextBlock>
+                                            <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                                                <TextBlock Text="{Binding StatusText}" Foreground="{Binding StatusBrush}" FontSize="11" FontWeight="SemiBold" Margin="0,0,14,0"/>
+                                                <TextBlock Foreground="{DynamicResource SecondaryTextBrush}" FontSize="11">
+                                                    <Run Text="Còn lại: "/>
+                                                    <Run Text="{Binding RemainingText, Mode=OneWay}"/>
+                                                </TextBlock>
+                                            </StackPanel>
+                                        </Grid>
+                                    </StackPanel>
+                                </Border>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                    <TextBlock Text="Chưa có ngân sách. Hãy tạo hạn mức đầu tiên."
+                               Foreground="{DynamicResource SecondaryTextBrush}"
+                               HorizontalAlignment="Center"
+                               Margin="0,18">
+                        <TextBlock.Style>
+                            <Style TargetType="TextBlock">
+                                <Setter Property="Visibility" Value="Collapsed"/>
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding HasBudgets}" Value="False">
+                                        <Setter Property="Visibility" Value="Visible"/>
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </TextBlock.Style>
+                    </TextBlock>
+                </Grid>
+            </StackPanel>
+        </Border>
+    </StackPanel>
+</UserControl>
