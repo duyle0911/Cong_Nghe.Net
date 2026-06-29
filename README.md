@@ -197,15 +197,14 @@ Người dùng truy cập màn hình thống kê
 ### 5. Luồng tổng quát hệ thống
 Người dùng thao tác trên giao diện  
 → View (UI)  
-→ ViewModel  
-→ Service (xử lý nghiệp vụ)  
+→ ViewModels 
+→ Services (xử lý nghiệp vụ)  
 → Repository (truy cập dữ liệu)  
 → Database  
 → Trả kết quả ngược lại View  
-
 ---
-
-
+- Luồng tổng quát của hệ thống
+![Luồng tổng quát của hệ thống](Resources/images/luongtongquat.png)
 ---
 
 ## 🧱 Công nghệ sử dụng
