@@ -18,17 +18,18 @@ namespace QuanLyTaiChinhCaNhan_Nhom06.ViewModels
     public class ReportViewModel : ViewModelBase
     {
         private readonly IReportService _reportService;
+        private readonly IAppearanceService _appearanceService;
         private readonly ISessionContext _sessionContext;
         private DateTime _fromDate = DateTimeHelper.StartOfMonth(DateTime.Now);
         private DateTime _toDate = DateTimeHelper.EndOfMonth(DateTime.Now);
         private string _income = "0 ₫";
         private string _expense = "0 ₫";
         private string _balance = "0 ₫";
-        private string _incomeChangeText = "Tổng khoản thu trong kỳ";
-        private string _expenseChangeText = "Tổng khoản chi trong kỳ";
-        private string _balanceChangeText = "Thu nhập trừ chi tiêu";
-        private string _positiveInsight = "Chưa có đủ dữ liệu để đưa ra nhận xét.";
-        private string _warningInsight = "Hãy ghi nhận giao dịch đều đặn để theo dõi tài chính chính xác hơn.";
+        private string _incomeChangeText = string.Empty;
+        private string _expenseChangeText = string.Empty;
+        private string _balanceChangeText = string.Empty;
+        private string _positiveInsight = string.Empty;
+        private string _warningInsight = string.Empty;
         private bool _hasData;
         private ISeries[] _categorySeries = Array.Empty<ISeries>();
         private ISeries[] _cashFlowSeries = Array.Empty<ISeries>();
@@ -36,12 +37,19 @@ namespace QuanLyTaiChinhCaNhan_Nhom06.ViewModels
         private Axis[] _xAxes = new[] { new Axis() };
         private Axis[] _cashFlowYAxes = new[] { new Axis() };
         private Axis[] _dailyXAxes = new[] { new Axis() };
-        private string _cashFlowChartSummary = "Theo dõi biến động thu nhập và chi tiêu trong khoảng thời gian đã chọn.";
+        private string _cashFlowChartSummary = string.Empty;
 
-        public ReportViewModel(IReportService reportService, ISessionContext sessionContext)
+        public ReportViewModel(IReportService reportService, IAppearanceService appearanceService, ISessionContext sessionContext)
         {
             _reportService = reportService;
+            _appearanceService = appearanceService;
             _sessionContext = sessionContext;
+            IncomeChangeText = _appearanceService.T("IncomeInPeriodText");
+            ExpenseChangeText = _appearanceService.T("ExpenseInPeriodText");
+            BalanceChangeText = _appearanceService.T("BalanceDescriptionText");
+            PositiveInsight = _appearanceService.T("NoMajorExpenseInsight");
+            WarningInsight = _appearanceService.T("TrackRegularlyInsight");
+            CashFlowChartSummary = _appearanceService.T("CashFlowSummaryDefault");
             Transactions = new ObservableCollection<Transaction>();
             FilterCommand = new AsyncRelayCommand(_ => LoadAsync());
             SelectPeriodCommand = new AsyncRelayCommand(period => SelectPeriodAsync(period?.ToString()));
@@ -95,11 +103,16 @@ namespace QuanLyTaiChinhCaNhan_Nhom06.ViewModels
             await LoadAsync();
         }
 
+        public override void RefreshLocalization()
+        {
+            _ = RunSafeAsync(LoadAsync);
+        }
+
         private async Task LoadAsync()
         {
             if (FromDate.Date > ToDate.Date)
             {
-                DialogHelper.Error("Ngày bắt đầu không được lớn hơn ngày kết thúc.");
+                DialogHelper.Error(_appearanceService.T("InvalidDateRange"));
                 return;
             }
 
@@ -110,9 +123,9 @@ namespace QuanLyTaiChinhCaNhan_Nhom06.ViewModels
             Income = DashboardPresentation.FormatMoney(totalIncome);
             Expense = DashboardPresentation.FormatMoney(totalExpense);
             Balance = DashboardPresentation.FormatMoney(totalIncome - totalExpense);
-            IncomeChangeText = "Tổng khoản thu trong kỳ";
-            ExpenseChangeText = "Tổng khoản chi trong kỳ";
-            BalanceChangeText = totalIncome >= totalExpense ? "Dòng tiền đang dương" : "Chi tiêu đang vượt thu nhập";
+            IncomeChangeText = _appearanceService.T("IncomeInPeriodText");
+            ExpenseChangeText = _appearanceService.T("ExpenseInPeriodText");
+            BalanceChangeText = totalIncome >= totalExpense ? _appearanceService.T("PositiveCashFlowText") : _appearanceService.T("ExpenseOverIncomeText");
 
             Transactions.Clear();
             foreach (var transaction in transactions)
@@ -123,7 +136,7 @@ namespace QuanLyTaiChinhCaNhan_Nhom06.ViewModels
             var categories = await _reportService.GetCategorySpendingAsync(userId, FromDate, ToDate);
             CategorySeries = categories.Take(6).Select(category => new PieSeries<double>
             {
-                Name = category.CategoryName,
+                Name = _appearanceService.LocalizeCategoryName(category.CategoryName, TransactionType.Expense),
                 Values = new[] { (double)category.Amount },
                 Fill = new SolidColorPaint(DashboardPresentation.ParseColor(category.Color)),
                 InnerRadius = 48
@@ -143,7 +156,7 @@ namespace QuanLyTaiChinhCaNhan_Nhom06.ViewModels
             {
                 new LineSeries<double>
                 {
-                    Name = "Thu nhập",
+                    Name = _appearanceService.LocalizeTransactionType(TransactionType.Income),
                     Values = cashFlow.Select(point => (double)point.Income).ToArray(),
                     Stroke = new SolidColorPaint(SKColor.Parse("#10B981"), 3),
                     Fill = new SolidColorPaint(SKColor.Parse("#3010B981")),
@@ -151,7 +164,7 @@ namespace QuanLyTaiChinhCaNhan_Nhom06.ViewModels
                 },
                 new LineSeries<double>
                 {
-                    Name = "Chi tiêu",
+                    Name = _appearanceService.LocalizeTransactionType(TransactionType.Expense),
                     Values = cashFlow.Select(point => (double)point.Expense).ToArray(),
                     Stroke = new SolidColorPaint(SKColor.Parse("#FB7185"), 3),
                     Fill = new SolidColorPaint(SKColor.Parse("#30FB7185")),
@@ -180,7 +193,7 @@ namespace QuanLyTaiChinhCaNhan_Nhom06.ViewModels
             {
                 new LineSeries<double>
                 {
-                    Name = "Chi tiêu",
+                    Name = _appearanceService.LocalizeTransactionType(TransactionType.Expense),
                     Values = dailyExpenses.Select(item => (double)item.Amount).ToArray(),
                     Stroke = new SolidColorPaint(SKColor.Parse("#06B6D4"), 3),
                     Fill = null,
@@ -226,7 +239,7 @@ namespace QuanLyTaiChinhCaNhan_Nhom06.ViewModels
             {
                 new ColumnSeries<double>
                 {
-                    Name = "Thu nhập",
+                    Name = _appearanceService.LocalizeTransactionType(TransactionType.Income),
                     Values = buckets.Select(bucket => (double)bucket.Income).ToArray(),
                     Fill = new SolidColorPaint(SKColor.Parse("#10B981")),
                     Stroke = null,
@@ -237,7 +250,7 @@ namespace QuanLyTaiChinhCaNhan_Nhom06.ViewModels
                 },
                 new ColumnSeries<double>
                 {
-                    Name = "Chi tiêu",
+                    Name = _appearanceService.LocalizeTransactionType(TransactionType.Expense),
                     Values = buckets.Select(bucket => (double)bucket.Expense).ToArray(),
                     Fill = new SolidColorPaint(SKColor.Parse("#FB7185")),
                     Stroke = null,
@@ -265,7 +278,7 @@ namespace QuanLyTaiChinhCaNhan_Nhom06.ViewModels
                     buckets.Add(CreateBucket(showLabel ? date.ToString("dd/MM") : string.Empty, transactions, date, date));
                 }
 
-                CashFlowChartSummary = $"Hiển thị theo ngày, {totalDays} mốc dữ liệu trong kỳ.";
+                CashFlowChartSummary = _appearanceService.Format("DailyDataSummaryFormat", totalDays);
                 return buckets;
             }
 
@@ -282,7 +295,7 @@ namespace QuanLyTaiChinhCaNhan_Nhom06.ViewModels
                     weekStart = weekEnd.AddDays(1);
                 }
 
-                CashFlowChartSummary = $"Hiển thị theo tuần, {buckets.Count} mốc dữ liệu trong kỳ.";
+                CashFlowChartSummary = _appearanceService.Format("WeeklyDataSummaryFormat", buckets.Count);
                 return buckets;
             }
 
@@ -297,7 +310,7 @@ namespace QuanLyTaiChinhCaNhan_Nhom06.ViewModels
                 month = month.AddMonths(1);
             }
 
-            CashFlowChartSummary = $"Hiển thị theo tháng, {buckets.Count} mốc dữ liệu trong kỳ.";
+            CashFlowChartSummary = _appearanceService.Format("MonthlyDataSummaryFormat", buckets.Count);
             return buckets;
         }
 
@@ -313,15 +326,15 @@ namespace QuanLyTaiChinhCaNhan_Nhom06.ViewModels
             return new CashFlowBucket(label, income, expense);
         }
 
-        private static string FormatChartMoney(double value)
+                private string FormatChartMoney(double value)
         {
             var absolute = Math.Abs(value);
 
             if (absolute >= 1_000_000_000)
-                return $"{value / 1_000_000_000:N1} tỷ";
+                return $"{value / 1_000_000_000:N1} {_appearanceService.T("BillionUnitSuffix")}";
 
             if (absolute >= 1_000_000)
-                return $"{value / 1_000_000:N0} tr";
+                return $"{value / 1_000_000:N0} {_appearanceService.T("MillionUnitSuffix")}";
 
             if (absolute >= 1_000)
                 return $"{value / 1_000:N0}k";
@@ -335,43 +348,43 @@ namespace QuanLyTaiChinhCaNhan_Nhom06.ViewModels
         {
             if (!HasData)
             {
-                PositiveInsight = "Chưa có giao dịch trong khoảng thời gian đã chọn.";
-                WarningInsight = "Hãy ghi nhận giao dịch đều đặn để theo dõi tài chính chính xác hơn.";
+                PositiveInsight = _appearanceService.T("NoTransactionsInPeriodText");
+                WarningInsight = _appearanceService.T("TrackRegularlyInsight");
                 return;
             }
 
             var savingsRate = totalIncome > 0 ? (totalIncome - totalExpense) / totalIncome * 100 : 0;
             PositiveInsight = totalIncome >= totalExpense
-                ? $"Dòng tiền dương. Bạn đang giữ lại {Math.Max(0, savingsRate):N0}% thu nhập trong kỳ."
-                : "Các giao dịch đã được tổng hợp. Hãy cân đối lại dòng tiền trong kỳ tiếp theo.";
+                ? _appearanceService.Format("PositiveSavingsInsightFormat", Math.Max(0, savingsRate))
+                : _appearanceService.T("RebalanceInsightText");
 
             var largestCategory = categories.FirstOrDefault();
             WarningInsight = largestCategory == null
-                ? "Chưa có khoản chi nổi bật cần lưu ý."
-                : $"Danh mục \"{largestCategory.CategoryName}\" đang chiếm mức chi lớn nhất: {DashboardPresentation.FormatMoney(largestCategory.Amount)}.";
+                ? _appearanceService.T("NoMajorExpenseInsight")
+                : _appearanceService.Format("LargestCategoryInsightFormat", _appearanceService.LocalizeCategoryName(largestCategory.CategoryName, TransactionType.Expense), DashboardPresentation.FormatMoney(largestCategory.Amount));
         }
 
         private void ExportCsv()
         {
             var dialog = new SaveFileDialog
             {
-                Title = "Xuất báo cáo",
+                Title = _appearanceService.T("ExportReportDialogTitle"),
                 Filter = "CSV (*.csv)|*.csv",
-                FileName = $"bao-cao-{FromDate:yyyyMMdd}-{ToDate:yyyyMMdd}.csv"
+                FileName = $"report-{FromDate:yyyyMMdd}-{ToDate:yyyyMMdd}.csv"
             };
 
             if (dialog.ShowDialog() != true)
                 return;
 
             var builder = new StringBuilder();
-            builder.AppendLine("Ngày,Nội dung,Danh mục,Loại,Số tiền");
+            builder.AppendLine(_appearanceService.T("CsvHeaderText"));
             foreach (var transaction in Transactions)
             {
                 builder.AppendLine(string.Join(",",
-                    transaction.Date.ToString("dd/MM/yyyy"),
+                    transaction.Date.ToString("d", CultureInfo.CurrentCulture),
                     EscapeCsv(transaction.Description),
-                    EscapeCsv(transaction.Category?.Name ?? string.Empty),
-                    transaction.Type,
+                    EscapeCsv(_appearanceService.LocalizeCategoryName(transaction.Category?.Name, transaction.Category?.Type)),
+                    _appearanceService.LocalizeTransactionType(transaction.Type),
                     transaction.Amount.ToString(CultureInfo.InvariantCulture)));
             }
 
@@ -384,3 +397,5 @@ namespace QuanLyTaiChinhCaNhan_Nhom06.ViewModels
         }
     }
 }
+
+

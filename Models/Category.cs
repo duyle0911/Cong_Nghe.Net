@@ -1,4 +1,5 @@
 ﻿using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
 
 namespace QuanLyTaiChinhCaNhan_Nhom06.Models
 {
@@ -9,6 +10,12 @@ namespace QuanLyTaiChinhCaNhan_Nhom06.Models
         [Required]
         [StringLength(100)]
         public string Name { get; set; } = string.Empty;
+
+        [NotMapped]
+        public string DisplayName { get; set; } = string.Empty;
+
+        [NotMapped]
+        public string EffectiveDisplayName => string.IsNullOrWhiteSpace(DisplayName) ? Name : DisplayName;
         
         [StringLength(7)]
         public string Color { get; set; } = "#2196F3";
@@ -27,4 +34,5 @@ namespace QuanLyTaiChinhCaNhan_Nhom06.Models
         public ICollection<Transaction> Transactions { get; set; } = new List<Transaction>();
     }
 }
+
 

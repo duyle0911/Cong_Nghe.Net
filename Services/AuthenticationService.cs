@@ -1,4 +1,4 @@
-using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.EntityFrameworkCore;
 using QuanLyTaiChinhCaNhan_Nhom06.Data;
 using QuanLyTaiChinhCaNhan_Nhom06.Models;
 
@@ -6,8 +6,8 @@ namespace QuanLyTaiChinhCaNhan_Nhom06.Services
 {
     public class AuthenticationService : AuthService
     {
-        public AuthenticationService(IDbContextFactory<ExpenseDbContext> dbFactory, ISessionContext sessionContext)
-            : base(dbFactory, sessionContext)
+        public AuthenticationService(IDbContextFactory<ExpenseDbContext> dbFactory, ISessionContext sessionContext, IAppearanceService appearanceService)
+            : base(dbFactory, sessionContext, appearanceService)
         {
         }
     }
@@ -22,3 +22,4 @@ namespace QuanLyTaiChinhCaNhan_Nhom06.Services
         }
     }
 }
+

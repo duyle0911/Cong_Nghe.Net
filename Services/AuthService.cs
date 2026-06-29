@@ -10,12 +10,14 @@ namespace QuanLyTaiChinhCaNhan_Nhom06.Services
     {
         private readonly IDbContextFactory<ExpenseDbContext> _dbFactory;
         private readonly ISessionContext _sessionContext;
+        private readonly IAppearanceService _appearanceService;
         private User? _currentUser;
 
-        public AuthService(IDbContextFactory<ExpenseDbContext> dbFactory, ISessionContext sessionContext)
+        public AuthService(IDbContextFactory<ExpenseDbContext> dbFactory, ISessionContext sessionContext, IAppearanceService appearanceService)
         {
             _dbFactory = dbFactory;
             _sessionContext = sessionContext;
+            _appearanceService = appearanceService;
         }
 
         public User? CurrentUser => _currentUser;
@@ -152,25 +154,26 @@ namespace QuanLyTaiChinhCaNhan_Nhom06.Services
         public async Task<(bool Success, string Message)> ChangePasswordAsync(string currentPassword, string newPassword)
         {
             if (_currentUser == null)
-                return (false, "Bạn cần đăng nhập.");
+                return (false, _appearanceService.T("CurrentPasswordRequiredMessage"));
 
             if (newPassword.Length < 6)
-                return (false, "Mật khẩu mới phải có ít nhất 6 ký tự.");
+                return (false, _appearanceService.T("NewPasswordTooShortMessage"));
 
             await using var context = await _dbFactory.CreateDbContextAsync();
             var user = await context.Users.FindAsync(_currentUser.Id);
 
             if (user == null)
-                return (false, "Không tìm thấy tài khoản.");
+                return (false, _appearanceService.T("AccountNotFoundMessage"));
 
             if (!PasswordHasher.Verify(currentPassword, user.PasswordHash))
-                return (false, "Mật khẩu hiện tại không đúng.");
+                return (false, _appearanceService.T("CurrentPasswordIncorrectMessage"));
 
             user.PasswordHash = PasswordHasher.Hash(newPassword);
             await context.SaveChangesAsync();
             _currentUser.PasswordHash = user.PasswordHash;
             _sessionContext.SetCurrentUser(_currentUser);
-            return (true, "Đổi mật khẩu thành công.");
+            return (true, _appearanceService.T("PasswordChangedMessage"));
         }
     }
 }
+

@@ -81,7 +81,7 @@
                     Style="{StaticResource TransactionPrimaryButton}">
                 <StackPanel Orientation="Horizontal">
                     <materialDesign:PackIcon Kind="Plus" Width="17" Height="17" Margin="0,0,7,0"/>
-                    <TextBlock Text="Thêm giao dịch"/>
+                    <TextBlock Text="{DynamicResource TransactionAddText}"/>
                 </StackPanel>
             </Button>
         </Grid>
@@ -101,7 +101,7 @@
                 <DockPanel Margin="0,0,0,13">
                     <Button DockPanel.Dock="Right"
                             Command="{Binding CancelCommand}"
-                            Content="Đóng"
+                            Content="{DynamicResource CloseText}"
                             Style="{StaticResource TransactionSecondaryButton}"/>
                     <TextBlock Text="{Binding EditorTitle}"
                                Foreground="{DynamicResource PrimaryTextBrush}"
@@ -126,25 +126,25 @@
                     </Grid.ColumnDefinitions>
 
                     <StackPanel Grid.Column="0">
-                        <TextBlock Text="Mô tả / ghi chú giao dịch" Style="{StaticResource MutedLabel}" Margin="0,0,0,6"/>
+                        <TextBlock Text="{DynamicResource TransactionDescriptionLabel}" Style="{StaticResource MutedLabel}" Margin="0,0,0,6"/>
                         <TextBox Text="{Binding Description, UpdateSourceTrigger=PropertyChanged}"/>
                     </StackPanel>
 
                     <StackPanel Grid.Column="2">
-                        <TextBlock Text="Số tiền" Style="{StaticResource MutedLabel}" Margin="0,0,0,6"/>
+                        <TextBlock Text="{DynamicResource AmountLabel}" Style="{StaticResource MutedLabel}" Margin="0,0,0,6"/>
                         <TextBox Text="{Binding Amount, UpdateSourceTrigger=PropertyChanged}"/>
                     </StackPanel>
 
                     <StackPanel Grid.Column="4">
-                        <TextBlock Text="Loại" Style="{StaticResource MutedLabel}" Margin="0,0,0,6"/>
-                        <ComboBox ItemsSource="{Binding Types}" SelectedItem="{Binding Type}"/>
+                        <TextBlock Text="{DynamicResource TypeLabel}" Style="{StaticResource MutedLabel}" Margin="0,0,0,6"/>
+                        <ComboBox ItemsSource="{Binding TypeOptions}" SelectedValuePath="Value" SelectedValue="{Binding Type}" DisplayMemberPath="DisplayName"/>
                     </StackPanel>
 
                     <StackPanel Grid.Column="6">
-                        <TextBlock Text="Danh mục" Style="{StaticResource MutedLabel}" Margin="0,0,0,6"/>
+                        <TextBlock Text="{DynamicResource CategoryLabel}" Style="{StaticResource MutedLabel}" Margin="0,0,0,6"/>
                         <ComboBox ItemsSource="{Binding Categories}"
                                   SelectedItem="{Binding SelectedCategory}"
-                                  DisplayMemberPath="Name"/>
+                                  DisplayMemberPath="EffectiveDisplayName"/>
                         <Button Command="{Binding OpenQuickCategoryCommand}"
                                 Style="{StaticResource TransactionSecondaryButton}"
                                 Height="30"
@@ -153,18 +153,18 @@
                                 HorizontalAlignment="Left">
                             <StackPanel Orientation="Horizontal">
                                 <materialDesign:PackIcon Kind="PlusCircleOutline" Width="14" Height="14" Margin="0,0,5,0"/>
-                                <TextBlock Text="Thêm danh mục"/>
+                                <TextBlock Text="{DynamicResource AddCategoryText}"/>
                             </StackPanel>
                         </Button>
                     </StackPanel>
 
                     <StackPanel Grid.Column="8">
-                        <TextBlock Text="Ngày" Style="{StaticResource MutedLabel}" Margin="0,0,0,6"/>
+                        <TextBlock Text="{DynamicResource DateLabel}" Style="{StaticResource MutedLabel}" Margin="0,0,0,6"/>
                         <DatePicker SelectedDate="{Binding Date}"/>
                     </StackPanel>
 
                     <StackPanel Grid.Column="10" Orientation="Horizontal" VerticalAlignment="Bottom">
-                        <Button Content="Xóa"
+                        <Button Content="{DynamicResource DeleteText}"
                                 Command="{Binding DeleteCommand}"
                                 Margin="0,0,12,0">
                             <Button.Style>
@@ -179,7 +179,7 @@
                                 </Style>
                             </Button.Style>
                         </Button>
-                        <Button Content="Lưu"
+                        <Button Content="{DynamicResource SaveText}"
                                 Command="{Binding SaveCommand}"
                                 Style="{StaticResource TransactionPrimaryButton}"/>
                     </StackPanel>
@@ -214,26 +214,73 @@
                         </Grid.ColumnDefinitions>
 
                         <StackPanel Grid.Column="0">
-                            <TextBlock Text="Tên danh mục mới" Style="{StaticResource MutedLabel}" Margin="0,0,0,6"/>
+                            <TextBlock Text="{DynamicResource NewCategoryNameLabel}" Style="{StaticResource MutedLabel}" Margin="0,0,0,6"/>
                             <TextBox Text="{Binding NewCategoryName, UpdateSourceTrigger=PropertyChanged}"/>
                         </StackPanel>
 
                         <StackPanel Grid.Column="2">
-                            <TextBlock Text="Màu sắc" Style="{StaticResource MutedLabel}" Margin="0,0,0,6"/>
-                            <TextBox Text="{Binding NewCategoryColor, UpdateSourceTrigger=PropertyChanged}"/>
+                            <TextBlock Text="{DynamicResource ColorLabel}" Style="{StaticResource MutedLabel}" Margin="0,0,0,6"/>
+                                                        <ListBox ItemsSource="{Binding ColorPaletteOptions}"
+                                     SelectedValuePath="Value"
+                                     SelectedValue="{Binding SelectedNewCategoryPaletteColor, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                     Style="{StaticResource ColorPaletteListBox}"
+                                     ItemContainerStyle="{StaticResource ColorPaletteItem}"
+                                     ItemTemplate="{StaticResource ColorPaletteItemTemplate}"/>
+                            <Grid Margin="0,8,0,0">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="Auto"/>
+                                    <ColumnDefinition Width="10"/>
+                                    <ColumnDefinition Width="*"/>
+                                </Grid.ColumnDefinitions>
+                                <Border Width="38"
+                                        Height="38"
+                                        CornerRadius="12"
+                                        Background="{Binding NewCategoryColorPreviewBrush}"
+                                        BorderBrush="{DynamicResource BorderBrushSoft}"
+                                        BorderThickness="1"/>
+                                <StackPanel Grid.Column="2">
+                                    <TextBlock Text="{Binding NewCategoryColor}"
+                                               Foreground="{DynamicResource SecondaryTextBrush}"
+                                               FontWeight="SemiBold"
+                                               FontSize="11"/>
+                                    <Grid Margin="0,4,0,0">
+                                        <Grid.RowDefinitions>
+                                            <RowDefinition Height="24"/>
+                                            <RowDefinition Height="24"/>
+                                            <RowDefinition Height="24"/>
+                                        </Grid.RowDefinitions>
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="16"/>
+                                            <ColumnDefinition Width="*"/>
+                                            <ColumnDefinition Width="32"/>
+                                        </Grid.ColumnDefinitions>
+                                        <TextBlock Text="R" Foreground="#EF4444" FontWeight="Bold" FontSize="11" VerticalAlignment="Center"/>
+                                        <Slider Grid.Column="1" Minimum="0" Maximum="255" TickFrequency="1" IsSnapToTickEnabled="True" Value="{Binding NewCategoryColorRed, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"/>
+                                        <TextBlock Grid.Column="2" Text="{Binding NewCategoryColorRed, StringFormat={}{0:F0}}" Foreground="{DynamicResource SecondaryTextBrush}" FontSize="11" HorizontalAlignment="Right" VerticalAlignment="Center"/>
+
+                                        <TextBlock Grid.Row="1" Text="G" Foreground="#10B981" FontWeight="Bold" FontSize="11" VerticalAlignment="Center"/>
+                                        <Slider Grid.Row="1" Grid.Column="1" Minimum="0" Maximum="255" TickFrequency="1" IsSnapToTickEnabled="True" Value="{Binding NewCategoryColorGreen, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"/>
+                                        <TextBlock Grid.Row="1" Grid.Column="2" Text="{Binding NewCategoryColorGreen, StringFormat={}{0:F0}}" Foreground="{DynamicResource SecondaryTextBrush}" FontSize="11" HorizontalAlignment="Right" VerticalAlignment="Center"/>
+
+                                        <TextBlock Grid.Row="2" Text="B" Foreground="#2563EB" FontWeight="Bold" FontSize="11" VerticalAlignment="Center"/>
+                                        <Slider Grid.Row="2" Grid.Column="1" Minimum="0" Maximum="255" TickFrequency="1" IsSnapToTickEnabled="True" Value="{Binding NewCategoryColorBlue, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"/>
+                                        <TextBlock Grid.Row="2" Grid.Column="2" Text="{Binding NewCategoryColorBlue, StringFormat={}{0:F0}}" Foreground="{DynamicResource SecondaryTextBrush}" FontSize="11" HorizontalAlignment="Right" VerticalAlignment="Center"/>
+                                    </Grid>
+                                </StackPanel>
+                            </Grid>
                         </StackPanel>
 
                         <StackPanel Grid.Column="4">
-                            <TextBlock Text="Biểu tượng" Style="{StaticResource MutedLabel}" Margin="0,0,0,6"/>
+                            <TextBlock Text="{DynamicResource IconLabel}" Style="{StaticResource MutedLabel}" Margin="0,0,0,6"/>
                             <TextBox Text="{Binding NewCategoryIcon, UpdateSourceTrigger=PropertyChanged}"/>
                         </StackPanel>
 
                         <StackPanel Grid.Column="6" Orientation="Horizontal" VerticalAlignment="Bottom">
-                            <Button Content="Hủy"
+                            <Button Content="{DynamicResource CancelText}"
                                     Command="{Binding CancelQuickCategoryCommand}"
                                     Style="{StaticResource TransactionSecondaryButton}"
                                     Margin="0,0,8,0"/>
-                            <Button Content="Lưu danh mục"
+                            <Button Content="{DynamicResource SaveCategoryText}"
                                     Command="{Binding CreateQuickCategoryCommand}"
                                     Style="{StaticResource TransactionPrimaryButton}"/>
                         </StackPanel>
@@ -264,7 +311,7 @@
                 </Grid>
 
                 <StackPanel Grid.Column="1" Orientation="Horizontal" Margin="16,0,0,0">
-                    <Button Content="Tất cả" Command="{Binding SelectFilterCommand}" CommandParameter="All">
+                    <Button Content="{DynamicResource AllFilterText}" Command="{Binding SelectFilterCommand}" CommandParameter="All">
                         <Button.Style>
                             <Style TargetType="Button" BasedOn="{StaticResource FilterChipButton}">
                                 <Style.Triggers>
@@ -276,7 +323,7 @@
                             </Style>
                         </Button.Style>
                     </Button>
-                    <Button Content="Thu nhập" Command="{Binding SelectFilterCommand}" CommandParameter="Income">
+                    <Button Content="{DynamicResource IncomeTypeText}" Command="{Binding SelectFilterCommand}" CommandParameter="Income">
                         <Button.Style>
                             <Style TargetType="Button" BasedOn="{StaticResource FilterChipButton}">
                                 <Style.Triggers>
@@ -288,7 +335,7 @@
                             </Style>
                         </Button.Style>
                     </Button>
-                    <Button Content="Chi tiêu" Command="{Binding SelectFilterCommand}" CommandParameter="Expense">
+                    <Button Content="{DynamicResource ExpenseTypeText}" Command="{Binding SelectFilterCommand}" CommandParameter="Expense">
                         <Button.Style>
                             <Style TargetType="Button" BasedOn="{StaticResource FilterChipButton}">
                                 <Style.Triggers>
@@ -315,12 +362,12 @@
                         <ColumnDefinition Width="170"/>
                         <ColumnDefinition Width="88"/>
                     </Grid.ColumnDefinitions>
-                    <TextBlock Text="Ngày" Grid.Column="0" Style="{StaticResource MutedLabel}" FontSize="11" Margin="14,0" VerticalAlignment="Center"/>
-                    <TextBlock Text="Tên giao dịch" Grid.Column="1" Style="{StaticResource MutedLabel}" FontSize="11" VerticalAlignment="Center"/>
-                    <TextBlock Text="Danh mục" Grid.Column="2" Style="{StaticResource MutedLabel}" FontSize="11" VerticalAlignment="Center"/>
-                    <TextBlock Text="Loại" Grid.Column="3" Style="{StaticResource MutedLabel}" FontSize="11" VerticalAlignment="Center"/>
-                    <TextBlock Text="Số tiền" Grid.Column="4" Style="{StaticResource MutedLabel}" FontSize="11" HorizontalAlignment="Right" VerticalAlignment="Center"/>
-                    <TextBlock Text="Thao tác" Grid.Column="5" Style="{StaticResource MutedLabel}" FontSize="11" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                    <TextBlock Text="{DynamicResource DateLabel}" Grid.Column="0" Style="{StaticResource MutedLabel}" FontSize="11" Margin="14,0" VerticalAlignment="Center"/>
+                    <TextBlock Text="{DynamicResource TransactionNameColumn}" Grid.Column="1" Style="{StaticResource MutedLabel}" FontSize="11" VerticalAlignment="Center"/>
+                    <TextBlock Text="{DynamicResource CategoryLabel}" Grid.Column="2" Style="{StaticResource MutedLabel}" FontSize="11" VerticalAlignment="Center"/>
+                    <TextBlock Text="{DynamicResource TypeLabel}" Grid.Column="3" Style="{StaticResource MutedLabel}" FontSize="11" VerticalAlignment="Center"/>
+                    <TextBlock Text="{DynamicResource AmountLabel}" Grid.Column="4" Style="{StaticResource MutedLabel}" FontSize="11" HorizontalAlignment="Right" VerticalAlignment="Center"/>
+                    <TextBlock Text="{DynamicResource ActionsColumn}" Grid.Column="5" Style="{StaticResource MutedLabel}" FontSize="11" HorizontalAlignment="Center" VerticalAlignment="Center"/>
                 </Grid>
 
                 <Grid>
@@ -411,7 +458,7 @@
                         </ItemsControl.ItemTemplate>
                     </ItemsControl>
 
-                    <TextBlock Text="Chưa có giao dịch phù hợp."
+                    <TextBlock Text="{DynamicResource NoMatchingTransactionsText}"
                                Foreground="{DynamicResource SecondaryTextBrush}"
                                FontSize="13"
                                HorizontalAlignment="Center"
@@ -437,3 +484,4 @@
         </Border>
     </StackPanel>
 </UserControl>
+

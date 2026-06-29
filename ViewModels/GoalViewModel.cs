@@ -11,6 +11,7 @@ namespace QuanLyTaiChinhCaNhan_Nhom06.ViewModels
     public class GoalViewModel : ViewModelBase
     {
         private readonly IGoalService _goalService;
+        private readonly IAppearanceService _appearanceService;
         private readonly ISessionContext _sessionContext;
         private Goal? _selectedGoal;
         private string _name = string.Empty;
@@ -19,23 +20,31 @@ namespace QuanLyTaiChinhCaNhan_Nhom06.ViewModels
         private decimal _addAmount;
         private DateTime _targetDate = DateTime.Now.AddMonths(1);
         private string _color = "#06B6D4";
+        private bool _isSyncingColorChannels;
+        private double _colorRed = 6;
+        private double _colorGreen = 182;
+        private double _colorBlue = 212;
         private bool _isEditorOpen;
         private bool _hasActiveGoals;
         private bool _hasCompletedGoals;
-        private string _editorTitle = "Tạo mục tiêu";
+        private string _editorTitle = string.Empty;
         private string _trackedGoalsText = "0";
         private string _totalTargetText = "0 ₫";
         private string _savedAmountText = "0 ₫";
-        private string _completionText = "0 mục tiêu đã hoàn thành";
+        private string _completionText = string.Empty;
 
-        public GoalViewModel(IGoalService goalService, ISessionContext sessionContext)
+        public GoalViewModel(IGoalService goalService, IAppearanceService appearanceService, ISessionContext sessionContext)
         {
             _goalService = goalService;
+            _appearanceService = appearanceService;
             _sessionContext = sessionContext;
+            EditorTitle = _appearanceService.T("CreateGoalTitle");
+            CompletionText = _appearanceService.Format("CompletedGoalsCountFormat", 0);
             Goals = new ObservableCollection<Goal>();
             ActiveGoals = new ObservableCollection<GoalOverview>();
             CompletedGoals = new ObservableCollection<GoalOverview>();
 
+            // Keep commands enabled because AsyncRelayCommand does not auto-refresh CanExecute when SelectedGoal changes.
             SaveCommand = new AsyncRelayCommand(_ => SaveAsync());
             DeleteCommand = new AsyncRelayCommand(_ => DeleteAsync());
             AddMoneyCommand = new AsyncRelayCommand(_ => AddMoneyAsync());
@@ -50,6 +59,7 @@ namespace QuanLyTaiChinhCaNhan_Nhom06.ViewModels
         public ObservableCollection<Goal> Goals { get; }
         public ObservableCollection<GoalOverview> ActiveGoals { get; }
         public ObservableCollection<GoalOverview> CompletedGoals { get; }
+        public System.Collections.Generic.IReadOnlyList<ColorPaletteOption> ColorPaletteOptions => ColorPalette.Options;
 
         public Goal? SelectedGoal
         {
@@ -103,7 +113,58 @@ namespace QuanLyTaiChinhCaNhan_Nhom06.ViewModels
         public string Color
         {
             get => _color;
-            set => SetProperty(ref _color, value);
+            set
+            {
+                var normalized = ColorPalette.Normalize(value, "#06B6D4");
+                if (!SetProperty(ref _color, normalized))
+                    return;
+
+                SyncColorChannels(normalized);
+                OnPropertyChanged(nameof(ColorPreviewBrush));
+                OnPropertyChanged(nameof(SelectedPaletteColor));
+            }
+        }
+
+        public string? SelectedPaletteColor
+        {
+            get => ColorPalette.IsPaletteColor(Color) ? Color : null;
+            set
+            {
+                if (!string.IsNullOrWhiteSpace(value))
+                    Color = value;
+            }
+        }
+
+        public Brush ColorPreviewBrush => ColorPalette.CreateBrush(Color, "#06B6D4");
+
+        public double ColorRed
+        {
+            get => _colorRed;
+            set
+            {
+                if (SetProperty(ref _colorRed, value))
+                    UpdateColorFromChannels();
+            }
+        }
+
+        public double ColorGreen
+        {
+            get => _colorGreen;
+            set
+            {
+                if (SetProperty(ref _colorGreen, value))
+                    UpdateColorFromChannels();
+            }
+        }
+
+        public double ColorBlue
+        {
+            get => _colorBlue;
+            set
+            {
+                if (SetProperty(ref _colorBlue, value))
+                    UpdateColorFromChannels();
+            }
         }
 
         public bool IsEditorOpen
@@ -161,6 +222,30 @@ namespace QuanLyTaiChinhCaNhan_Nhom06.ViewModels
         public ICommand CancelCommand { get; }
         public ICommand EditCommand { get; }
 
+        private void UpdateColorFromChannels()
+        {
+            if (_isSyncingColorChannels)
+                return;
+
+            Color = ColorPalette.ToHex(ColorRed, ColorGreen, ColorBlue);
+        }
+
+        private void SyncColorChannels(string? value)
+        {
+            if (!ColorPalette.TryParseColor(value, out var parsed))
+                return;
+
+            _isSyncingColorChannels = true;
+            ColorRed = parsed.R;
+            ColorGreen = parsed.G;
+            ColorBlue = parsed.B;
+            _isSyncingColorChannels = false;
+        }
+        public override void RefreshLocalization()
+        {
+            _ = RunSafeAsync(LoadAsync);
+        }
+
         private async Task LoadAsync()
         {
             Goals.Clear();
@@ -171,7 +256,7 @@ namespace QuanLyTaiChinhCaNhan_Nhom06.ViewModels
             {
                 Goals.Add(goal);
 
-                var overview = new GoalOverview(goal);
+                var overview = new GoalOverview(goal, _appearanceService);
 
                 if (goal.IsCompleted)
                     CompletedGoals.Add(overview);
@@ -185,20 +270,20 @@ namespace QuanLyTaiChinhCaNhan_Nhom06.ViewModels
             TrackedGoalsText = ActiveGoals.Count.ToString();
             TotalTargetText = DashboardPresentation.FormatMoney(Goals.Sum(goal => goal.TargetAmount));
             SavedAmountText = DashboardPresentation.FormatMoney(Goals.Sum(goal => goal.CurrentAmount));
-            CompletionText = $"{CompletedGoals.Count} mục tiêu đã hoàn thành";
+            CompletionText = _appearanceService.Format("CompletedGoalsCountFormat", CompletedGoals.Count);
         }
 
         private async Task SaveAsync()
         {
             if (!Validator.Required(Name))
             {
-                DialogHelper.Error("Vui lòng nhập tên mục tiêu.");
+                DialogHelper.Error(_appearanceService.T("GoalNameRequired"));
                 return;
             }
 
             if (TargetAmount <= 0)
             {
-                DialogHelper.Error("Số tiền mục tiêu phải lớn hơn 0.");
+                DialogHelper.Error(_appearanceService.T("GoalAmountInvalid"));
                 return;
             }
 
@@ -225,7 +310,7 @@ namespace QuanLyTaiChinhCaNhan_Nhom06.ViewModels
 
             if (!ok)
             {
-                DialogHelper.Error("Không thể lưu mục tiêu.");
+                DialogHelper.Error(_appearanceService.T("GoalSaveFailed"));
                 return;
             }
 
@@ -237,13 +322,13 @@ namespace QuanLyTaiChinhCaNhan_Nhom06.ViewModels
         {
             if (SelectedGoal == null)
             {
-                DialogHelper.Error("Vui lòng chọn một mục tiêu trước khi nạp tiền.");
+                DialogHelper.Error(_appearanceService.T("SelectGoalBeforeAdding"));
                 return;
             }
 
             if (AddAmount <= 0)
             {
-                DialogHelper.Error("Số tiền thêm vào mục tiêu phải lớn hơn 0.");
+                DialogHelper.Error(_appearanceService.T("GoalAddAmountInvalid"));
                 return;
             }
 
@@ -266,11 +351,11 @@ namespace QuanLyTaiChinhCaNhan_Nhom06.ViewModels
         {
             if (SelectedGoal == null)
             {
-                DialogHelper.Error("Vui lòng chọn một mục tiêu trước khi xóa.");
+                DialogHelper.Error(_appearanceService.T("SelectGoalBeforeDelete"));
                 return;
             }
 
-            if (!DialogHelper.Confirm($"Xóa mục tiêu '{SelectedGoal.Name}'?"))
+            if (!DialogHelper.Confirm(_appearanceService.Format("DeleteGoalConfirmFormat", SelectedGoal.Name)))
                 return;
 
             var ok = await _goalService.DeleteGoalAsync(
@@ -279,7 +364,7 @@ namespace QuanLyTaiChinhCaNhan_Nhom06.ViewModels
 
             if (!ok)
             {
-                DialogHelper.Error("Không thể xóa mục tiêu.");
+                DialogHelper.Error(_appearanceService.T("GoalDeleteFailed"));
                 return;
             }
 
@@ -290,7 +375,7 @@ namespace QuanLyTaiChinhCaNhan_Nhom06.ViewModels
         private void OpenNewEditor()
         {
             ClearForm();
-            EditorTitle = "Tạo mục tiêu";
+            EditorTitle = _appearanceService.T("CreateGoalTitle");
             IsEditorOpen = true;
         }
 
@@ -300,7 +385,7 @@ namespace QuanLyTaiChinhCaNhan_Nhom06.ViewModels
                 return;
 
             SelectedGoal = goal;
-            EditorTitle = "Chỉnh sửa mục tiêu";
+            EditorTitle = _appearanceService.T("EditGoalTitle");
             IsEditorOpen = true;
         }
 
@@ -324,20 +409,20 @@ namespace QuanLyTaiChinhCaNhan_Nhom06.ViewModels
 
     public class GoalOverview
     {
-        public GoalOverview(Goal goal)
+        public GoalOverview(Goal goal, IAppearanceService appearanceService)
         {
             Goal = goal;
             Name = goal.Name;
 
             DeadlineText = goal.IsCompleted
-                ? $"Hoàn thành: {goal.CompletedDate ?? goal.UpdatedAt:dd/MM/yyyy}"
-                : $"Hạn: {goal.TargetDate:dd/MM/yyyy}";
+                ? appearanceService.Format("GoalCompletedDateFormat", goal.CompletedDate ?? goal.UpdatedAt)
+                : appearanceService.Format("GoalDeadlineFormat", goal.TargetDate);
 
             AmountText = $"{DashboardPresentation.FormatMoney(goal.CurrentAmount)} / {DashboardPresentation.FormatMoney(goal.TargetAmount)}";
 
             RemainingText = goal.IsCompleted
                 ? DashboardPresentation.FormatMoney(goal.TargetAmount)
-                : $"Còn {DashboardPresentation.FormatMoney(Math.Max(0, goal.TargetAmount - goal.CurrentAmount))}";
+                : appearanceService.Format("GoalRemainingFormat", DashboardPresentation.FormatMoney(Math.Max(0, goal.TargetAmount - goal.CurrentAmount)));
 
             ProgressPercent = goal.ProgressPercent;
             ProgressText = $"{ProgressPercent:N0}%";
@@ -357,3 +442,4 @@ namespace QuanLyTaiChinhCaNhan_Nhom06.ViewModels
         public Brush SoftAccentBrush { get; }
     }
 }
+

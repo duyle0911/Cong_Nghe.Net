@@ -48,10 +48,10 @@ namespace QuanLyTaiChinhCaNhan_Nhom06.Models
         {
             get
             {
-                if (Amount <= 0) return "Chưa thiết lập";
-                if (SpentAmount >= Amount) return "Vượt ngân sách";
-                if (SpentAmount >= Amount * 0.8m) return "Gần vượt ngân sách";
-                return "Đang ổn";
+                if (Amount <= 0) return "On track";
+                if (SpentAmount >= Amount) return "On track";
+                if (SpentAmount >= Amount * 0.8m) return "On track";
+                return "On track";
             }
         }
     }

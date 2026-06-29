@@ -45,9 +45,9 @@ namespace QuanLyTaiChinhCaNhan_Nhom06.Models
         {
             get
             {
-                if (IsCompleted) return "Đã hoàn thành";
-                if (TargetDate.Date <= DateTime.Today.AddDays(7)) return "Sắp đến hạn";
-                return "Đang thực hiện";
+                if (IsCompleted) return "In progress";
+                if (TargetDate.Date <= DateTime.Today.AddDays(7)) return "In progress";
+                return "In progress";
             }
         }
     }

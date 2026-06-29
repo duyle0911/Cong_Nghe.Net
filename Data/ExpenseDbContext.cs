@@ -42,7 +42,7 @@ namespace QuanLyTaiChinhCaNhan_Nhom06.Data
                       .HasForeignKey(e => e.CategoryId)
                       .OnDelete(DeleteBehavior.Restrict);
 
-                // xóa budget khong lam gi
+                // Deleting a budget does not cascade changes.
                 entity.HasOne(e => e.Budget)
                       .WithMany()
                       .HasForeignKey(e => e.BudgetId)
@@ -55,7 +55,7 @@ namespace QuanLyTaiChinhCaNhan_Nhom06.Data
                       .OnDelete(DeleteBehavior.NoAction);
             });
 
-            // --- Cấu hình Category ---
+            // --- Category configuration ---
             modelBuilder.Entity<Category>(entity =>
             {
                 entity.HasKey(e => e.Id);
@@ -70,7 +70,7 @@ namespace QuanLyTaiChinhCaNhan_Nhom06.Data
                       .OnDelete(DeleteBehavior.Cascade);
             });
 
-            // --- Cấu hình Budget ---
+            // --- Budget configuration ---
             modelBuilder.Entity<Budget>(entity =>
             {
                 entity.HasKey(e => e.Id);
@@ -92,7 +92,7 @@ namespace QuanLyTaiChinhCaNhan_Nhom06.Data
                       .OnDelete(DeleteBehavior.NoAction);
             });
 
-            // --- Cấu hình Goal ---
+            // --- Goal configuration ---
             modelBuilder.Entity<Goal>(entity =>
             {
                 entity.HasKey(e => e.Id);

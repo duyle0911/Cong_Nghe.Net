@@ -15,31 +15,41 @@ namespace QuanLyTaiChinhCaNhan_Nhom06.ViewModels
         private readonly ICategoryService _categoryService;
         private readonly IDataService _dataService;
         private readonly IBudgetService _budgetService;
+        private readonly IAppearanceService _appearanceService;
         private readonly ISessionContext _sessionContext;
         private readonly AsyncRelayCommand _deleteCommand;
         private Category? _selectedCategory;
         private CategoryOverview? _selectedOverview;
         private string _name = string.Empty;
         private string _color = "#0EA5E9";
+        private bool _isSyncingColorChannels;
+        private double _colorRed = 14;
+        private double _colorGreen = 165;
+        private double _colorBlue = 233;
         private string _icon = "Category";
         private TransactionType _type = TransactionType.Expense;
         private bool _isEditorOpen;
         private bool _hasCategories;
-        private string _editorTitle = "Thêm danh mục";
+        private string _editorTitle = string.Empty;
 
         public CategoryViewModel(
             ICategoryService categoryService,
             IDataService dataService,
             IBudgetService budgetService,
+            IAppearanceService appearanceService,
             ISessionContext sessionContext)
         {
             _categoryService = categoryService;
             _dataService = dataService;
             _budgetService = budgetService;
+            _appearanceService = appearanceService;
             _sessionContext = sessionContext;
+            EditorTitle = _appearanceService.T("AddCategoryTitle");
 
             Categories = new ObservableCollection<Category>();
             CategoryOverviews = new ObservableCollection<CategoryOverview>();
+            TypeOptions = new ObservableCollection<TransactionTypeOption>();
+            RefreshTypeOptions();
 
             SaveCommand = new AsyncRelayCommand(_ => SaveAsync());
             _deleteCommand = new AsyncRelayCommand(_ => DeleteAsync(), _ => SelectedCategory != null);
@@ -52,7 +62,8 @@ namespace QuanLyTaiChinhCaNhan_Nhom06.ViewModels
 
         public ObservableCollection<Category> Categories { get; }
         public ObservableCollection<CategoryOverview> CategoryOverviews { get; }
-        public Array Types => Enum.GetValues(typeof(TransactionType));
+        public ObservableCollection<TransactionTypeOption> TypeOptions { get; }
+        public System.Collections.Generic.IReadOnlyList<ColorPaletteOption> ColorPaletteOptions => ColorPalette.Options;
 
         public Category? SelectedCategory
         {
@@ -87,7 +98,62 @@ namespace QuanLyTaiChinhCaNhan_Nhom06.ViewModels
         }
 
         public string Name { get => _name; set => SetProperty(ref _name, value); }
-        public string Color { get => _color; set => SetProperty(ref _color, value); }
+        public string Color
+        {
+            get => _color;
+            set
+            {
+                var normalized = ColorPalette.Normalize(value, "#0EA5E9");
+                if (!SetProperty(ref _color, normalized))
+                    return;
+
+                SyncColorChannels(normalized);
+                OnPropertyChanged(nameof(ColorPreviewBrush));
+                OnPropertyChanged(nameof(SelectedPaletteColor));
+            }
+        }
+
+        public string? SelectedPaletteColor
+        {
+            get => ColorPalette.IsPaletteColor(Color) ? Color : null;
+            set
+            {
+                if (!string.IsNullOrWhiteSpace(value))
+                    Color = value;
+            }
+        }
+
+        public Brush ColorPreviewBrush => ColorPalette.CreateBrush(Color, "#0EA5E9");
+
+        public double ColorRed
+        {
+            get => _colorRed;
+            set
+            {
+                if (SetProperty(ref _colorRed, value))
+                    UpdateColorFromChannels();
+            }
+        }
+
+        public double ColorGreen
+        {
+            get => _colorGreen;
+            set
+            {
+                if (SetProperty(ref _colorGreen, value))
+                    UpdateColorFromChannels();
+            }
+        }
+
+        public double ColorBlue
+        {
+            get => _colorBlue;
+            set
+            {
+                if (SetProperty(ref _colorBlue, value))
+                    UpdateColorFromChannels();
+            }
+        }
         public string Icon { get => _icon; set => SetProperty(ref _icon, value); }
         public TransactionType Type { get => _type; set => SetProperty(ref _type, value); }
         public bool IsEditorOpen { get => _isEditorOpen; set => SetProperty(ref _isEditorOpen, value); }
@@ -99,6 +165,37 @@ namespace QuanLyTaiChinhCaNhan_Nhom06.ViewModels
         public ICommand CancelCommand { get; }
         public ICommand EditCommand { get; }
 
+        private void UpdateColorFromChannels()
+        {
+            if (_isSyncingColorChannels)
+                return;
+
+            Color = ColorPalette.ToHex(ColorRed, ColorGreen, ColorBlue);
+        }
+
+        private void SyncColorChannels(string? value)
+        {
+            if (!ColorPalette.TryParseColor(value, out var parsed))
+                return;
+
+            _isSyncingColorChannels = true;
+            ColorRed = parsed.R;
+            ColorGreen = parsed.G;
+            ColorBlue = parsed.B;
+            _isSyncingColorChannels = false;
+        }
+        public override void RefreshLocalization()
+        {
+            RefreshTypeOptions();
+            _ = RunSafeAsync(LoadAsync);
+        }
+
+        private void RefreshTypeOptions()
+        {
+            TypeOptions.Clear();
+            TypeOptions.Add(new TransactionTypeOption(TransactionType.Income, _appearanceService.LocalizeTransactionType(TransactionType.Income)));
+            TypeOptions.Add(new TransactionTypeOption(TransactionType.Expense, _appearanceService.LocalizeTransactionType(TransactionType.Expense)));
+        }
         private async Task LoadAsync()
         {
             var userId = _sessionContext.CurrentUserId ?? 0;
@@ -117,6 +214,7 @@ namespace QuanLyTaiChinhCaNhan_Nhom06.ViewModels
 
             foreach (var category in categoriesTask.Result)
             {
+                category.DisplayName = _appearanceService.LocalizeCategoryName(category.Name, category.Type);
                 Categories.Add(category);
                 var transactions = transactionsTask.Result.Where(transaction => transaction.CategoryId == category.Id);
                 var budget = budgetsTask.Result.FirstOrDefault(item =>
@@ -125,7 +223,7 @@ namespace QuanLyTaiChinhCaNhan_Nhom06.ViewModels
                     && now.Date >= item.StartDate.Date
                     && now.Date <= item.EndDate.Date);
 
-                CategoryOverviews.Add(new CategoryOverview(category, transactions, budget));
+                CategoryOverviews.Add(new CategoryOverview(category, transactions, budget, _appearanceService));
             }
 
             HasCategories = CategoryOverviews.Any();
@@ -135,13 +233,13 @@ namespace QuanLyTaiChinhCaNhan_Nhom06.ViewModels
         {
             if (!Validator.Required(Name))
             {
-                DialogHelper.Error("Vui lòng nhập tên danh mục.");
+                DialogHelper.Error(_appearanceService.T("CategoryNameRequired"));
                 return;
             }
 
             if (!CategoryOverview.IsValidColor(Color))
             {
-                DialogHelper.Error("Màu sắc phải có định dạng #RRGGBB, ví dụ #0EA5E9.");
+                DialogHelper.Error(_appearanceService.T("InvalidColorMessage"));
                 return;
             }
 
@@ -152,7 +250,7 @@ namespace QuanLyTaiChinhCaNhan_Nhom06.ViewModels
 
             if (!ok)
             {
-                DialogHelper.Error("Không thể lưu danh mục. Có thể tên đã tồn tại.");
+                DialogHelper.Error(_appearanceService.T("CategorySaveFailed"));
                 return;
             }
 
@@ -162,7 +260,7 @@ namespace QuanLyTaiChinhCaNhan_Nhom06.ViewModels
 
         private async Task DeleteAsync()
         {
-            if (SelectedCategory == null || !DialogHelper.Confirm($"Xóa danh mục '{SelectedCategory.Name}'?"))
+            if (SelectedCategory == null || !DialogHelper.Confirm(_appearanceService.Format("DeleteCategoryConfirmFormat", SelectedCategory.Name)))
                 return;
 
             var result = await _categoryService.DeleteCategoryAsync(SelectedCategory.Id, _sessionContext.CurrentUserId ?? 0);
@@ -179,7 +277,7 @@ namespace QuanLyTaiChinhCaNhan_Nhom06.ViewModels
         private void OpenNewEditor()
         {
             ClearForm();
-            EditorTitle = "Thêm danh mục";
+            EditorTitle = _appearanceService.T("AddCategoryTitle");
             IsEditorOpen = true;
         }
 
@@ -189,7 +287,7 @@ namespace QuanLyTaiChinhCaNhan_Nhom06.ViewModels
                 return;
 
             SelectedCategory = category;
-            EditorTitle = "Chỉnh sửa danh mục";
+            EditorTitle = _appearanceService.T("EditCategoryTitle");
             IsEditorOpen = true;
         }
 
@@ -214,10 +312,14 @@ namespace QuanLyTaiChinhCaNhan_Nhom06.ViewModels
     {
         private static readonly Brush DefaultAccentBrush = CreateBrush("#0EA5E9");
         private static readonly Brush DefaultSoftAccentBrush = CreateBrush("#200EA5E9");
+        private readonly IAppearanceService _appearanceService;
+        private readonly string _displayName;
 
-        public CategoryOverview(Category category, IEnumerable<Transaction> transactions, Budget? budget)
+        public CategoryOverview(Category category, IEnumerable<Transaction> transactions, Budget? budget, IAppearanceService appearanceService)
         {
             Category = category;
+            _appearanceService = appearanceService;
+            _displayName = appearanceService.LocalizeCategoryName(category.Name, category.Type);
             var monthlyTransactions = transactions.ToList();
             Budget = budget;
             TransactionCount = monthlyTransactions.Count;
@@ -232,14 +334,14 @@ namespace QuanLyTaiChinhCaNhan_Nhom06.ViewModels
 
         public Category Category { get; }
         public Budget? Budget { get; }
-        public string Name => Category.Name;
-        public string TypeLabel => Category.Type == TransactionType.Expense ? "Chi tiêu" : "Thu nhập";
-        public string TotalLabel => Category.Type == TransactionType.Expense ? "Đã chi" : "Đã thu";
+        public string Name => _displayName;
+        public string TypeLabel => _appearanceService.LocalizeTransactionType(Category.Type);
+        public string TotalLabel => Category.Type == TransactionType.Expense ? _appearanceService.T("TotalSpentLabel") : _appearanceService.T("TotalIncomeLabel");
         public decimal TotalAmount { get; }
         public string TotalAmountText => FormatMoney(TotalAmount);
         public int TransactionCount { get; }
         public decimal BudgetAmount => Budget?.Amount ?? 0;
-        public string BudgetAmountText => Budget == null ? "Chưa thiết lập" : FormatMoney(BudgetAmount);
+        public string BudgetAmountText => Budget == null ? _appearanceService.T("NotSetText") : FormatMoney(BudgetAmount);
         public decimal RemainingAmount => BudgetAmount - TotalAmount;
         public string RemainingAmountText => Budget == null ? "-" : FormatMoney(RemainingAmount);
         public decimal ProgressPercent => BudgetAmount > 0 ? Math.Min(100, TotalAmount / BudgetAmount * 100) : 0;
@@ -253,14 +355,14 @@ namespace QuanLyTaiChinhCaNhan_Nhom06.ViewModels
             get
             {
                 if (Category.Type == TransactionType.Income)
-                    return "Khoản thu";
+                    return _appearanceService.T("IncomeItemStatus");
                 if (Budget == null)
-                    return "Chưa lập ngân sách";
+                    return _appearanceService.T("NoBudgetStatus");
                 if (TotalAmount >= BudgetAmount)
-                    return "Vượt ngân sách";
+                    return _appearanceService.T("OverBudgetStatus");
                 if (TotalAmount >= BudgetAmount * 0.8m)
-                    return "Cần chú ý";
-                return "Ổn định";
+                    return _appearanceService.T("NeedsAttentionStatus");
+                return _appearanceService.T("StableStatus");
             }
         }
 
@@ -305,7 +407,7 @@ namespace QuanLyTaiChinhCaNhan_Nhom06.ViewModels
 
         private static string FormatMoney(decimal amount)
         {
-            return string.Format(CultureInfo.GetCultureInfo("vi-VN"), "{0:N0} ₫", amount);
+            return string.Format(CultureInfo.CurrentCulture, "{0:N0} ₫", amount);
         }
 
         private static string WithAlpha(string? color, string alpha)
@@ -340,3 +442,6 @@ namespace QuanLyTaiChinhCaNhan_Nhom06.ViewModels
         }
     }
 }
+
+
+

@@ -1,4 +1,4 @@
-﻿using System.Windows.Input;
+using System.Windows.Input;
 using QuanLyTaiChinhCaNhan_Nhom06.Commands;
 using QuanLyTaiChinhCaNhan_Nhom06.Helpers;
 using QuanLyTaiChinhCaNhan_Nhom06.Models;
@@ -30,7 +30,12 @@ namespace QuanLyTaiChinhCaNhan_Nhom06.ViewModels
             NavigateCommand = new RelayCommand(p => Navigate(p?.ToString() ?? "Dashboard"), _ => IsAuthenticated);
             LogoutCommand = new RelayCommand(_ => Logout(), _ => IsAuthenticated);
             ToggleThemeCommand = new RelayCommand(_ => IsDarkMode = !IsDarkMode);
-            _appearanceService.SettingsChanged += (_, _) => UpdateTitle();
+            _appearanceService.SettingsChanged += (_, _) =>
+            {
+                UpdateTitle();
+                CurrentViewModel.RefreshLocalization();
+                OnPropertyChanged(nameof(CurrentUserDisplayName));
+            };
             UpdateTitle();
         }
 
@@ -70,6 +75,7 @@ namespace QuanLyTaiChinhCaNhan_Nhom06.ViewModels
         }
 
         public User? CurrentUser => _authService.CurrentUser;
+        public string CurrentUserDisplayName => string.IsNullOrWhiteSpace(CurrentUser?.FullName) ? _appearanceService.T("UserFallbackText") : CurrentUser!.FullName;
 
         public ICommand NavigateCommand { get; }
         public ICommand LogoutCommand { get; }
@@ -95,6 +101,7 @@ namespace QuanLyTaiChinhCaNhan_Nhom06.ViewModels
         {
             IsAuthenticated = true;
             OnPropertyChanged(nameof(CurrentUser));
+            OnPropertyChanged(nameof(CurrentUserDisplayName));
             Navigate("Dashboard");
         }
 
@@ -122,7 +129,7 @@ namespace QuanLyTaiChinhCaNhan_Nhom06.ViewModels
             catch (Exception ex)
             {
                 AppLogger.Log(ex);
-                DialogHelper.Error($"Không thể mở màn hình {target}: {ex.Message}");
+                DialogHelper.Error(_appearanceService.Format("OpenScreenErrorFormat", target, ex.Message));
                 CurrentViewModel = new PlaceholderViewModel();
                 _currentTarget = "Error";
                 UpdateTitle();
@@ -162,3 +169,6 @@ namespace QuanLyTaiChinhCaNhan_Nhom06.ViewModels
         }
     }
 }
+
+
+

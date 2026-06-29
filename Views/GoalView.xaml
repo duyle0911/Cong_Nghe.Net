@@ -34,7 +34,7 @@
             <Button Grid.Column="1" Command="{Binding NewCommand}" Style="{StaticResource GoalActionButton}">
                 <StackPanel Orientation="Horizontal">
                     <materialDesign:PackIcon Kind="Plus" Width="17" Height="17" Margin="0,0,7,0"/>
-                    <TextBlock Text="Tạo mục tiêu"/>
+                    <TextBlock Text="{DynamicResource CreateGoalText}"/>
                 </StackPanel>
             </Button>
         </Grid>
@@ -52,7 +52,7 @@
             </Border.Style>
             <StackPanel>
                 <DockPanel Margin="0,0,0,14">
-                    <Button DockPanel.Dock="Right" Content="Đóng" Command="{Binding CancelCommand}" Style="{StaticResource GoalSecondaryButton}"/>
+                    <Button DockPanel.Dock="Right" Content="{DynamicResource CloseText}" Command="{Binding CancelCommand}" Style="{StaticResource GoalSecondaryButton}"/>
                     <TextBlock Text="{Binding EditorTitle}" Foreground="{DynamicResource PrimaryTextBrush}" FontWeight="SemiBold" FontSize="17" VerticalAlignment="Center"/>
                 </DockPanel>
                 <Grid>
@@ -64,15 +64,15 @@
                         <ColumnDefinition Width="*"/>
                     </Grid.ColumnDefinitions>
                     <StackPanel Grid.Column="0">
-                        <TextBlock Text="Tên mục tiêu" Style="{StaticResource MutedLabel}" Margin="0,0,0,6"/>
+                        <TextBlock Text="{DynamicResource GoalNameLabel}" Style="{StaticResource MutedLabel}" Margin="0,0,0,6"/>
                         <TextBox Text="{Binding Name, UpdateSourceTrigger=PropertyChanged}"/>
                     </StackPanel>
                     <StackPanel Grid.Column="2">
-                        <TextBlock Text="Số tiền mục tiêu" Style="{StaticResource MutedLabel}" Margin="0,0,0,6"/>
+                        <TextBlock Text="{DynamicResource TargetAmountLabel}" Style="{StaticResource MutedLabel}" Margin="0,0,0,6"/>
                         <TextBox Text="{Binding TargetAmount, UpdateSourceTrigger=PropertyChanged}"/>
                     </StackPanel>
                     <StackPanel Grid.Column="4">
-                        <TextBlock Text="Ngày hoàn thành" Style="{StaticResource MutedLabel}" Margin="0,0,0,6"/>
+                        <TextBlock Text="{DynamicResource TargetDateLabel}" Style="{StaticResource MutedLabel}" Margin="0,0,0,6"/>
                         <DatePicker SelectedDate="{Binding TargetDate}"/>
                     </StackPanel>
                 </Grid>
@@ -85,16 +85,63 @@
                         <ColumnDefinition Width="Auto"/>
                     </Grid.ColumnDefinitions>
                     <StackPanel Grid.Column="0">
-                        <TextBlock Text="Mô tả" Style="{StaticResource MutedLabel}" Margin="0,0,0,6"/>
+                        <TextBlock Text="{DynamicResource DescriptionLabel}" Style="{StaticResource MutedLabel}" Margin="0,0,0,6"/>
                         <TextBox Text="{Binding Description, UpdateSourceTrigger=PropertyChanged}"/>
                     </StackPanel>
                     <StackPanel Grid.Column="2">
-                        <TextBlock Text="Màu sắc" Style="{StaticResource MutedLabel}" Margin="0,0,0,6"/>
-                        <TextBox Text="{Binding Color, UpdateSourceTrigger=PropertyChanged}"/>
+                        <TextBlock Text="{DynamicResource ColorLabel}" Style="{StaticResource MutedLabel}" Margin="0,0,0,6"/>
+                                                <ListBox ItemsSource="{Binding ColorPaletteOptions}"
+                                 SelectedValuePath="Value"
+                                 SelectedValue="{Binding SelectedPaletteColor, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                 Style="{StaticResource ColorPaletteListBox}"
+                                 ItemContainerStyle="{StaticResource ColorPaletteItem}"
+                                 ItemTemplate="{StaticResource ColorPaletteItemTemplate}"/>
+                        <Grid Margin="0,8,0,0">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto"/>
+                                <ColumnDefinition Width="10"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+                            <Border Width="38"
+                                    Height="38"
+                                    CornerRadius="12"
+                                    Background="{Binding ColorPreviewBrush}"
+                                    BorderBrush="{DynamicResource BorderBrushSoft}"
+                                    BorderThickness="1"/>
+                            <StackPanel Grid.Column="2">
+                                <TextBlock Text="{Binding Color}"
+                                           Foreground="{DynamicResource SecondaryTextBrush}"
+                                           FontWeight="SemiBold"
+                                           FontSize="11"/>
+                                <Grid Margin="0,4,0,0">
+                                    <Grid.RowDefinitions>
+                                        <RowDefinition Height="24"/>
+                                        <RowDefinition Height="24"/>
+                                        <RowDefinition Height="24"/>
+                                    </Grid.RowDefinitions>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="16"/>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="32"/>
+                                    </Grid.ColumnDefinitions>
+                                    <TextBlock Text="R" Foreground="#EF4444" FontWeight="Bold" FontSize="11" VerticalAlignment="Center"/>
+                                    <Slider Grid.Column="1" Minimum="0" Maximum="255" TickFrequency="1" IsSnapToTickEnabled="True" Value="{Binding ColorRed, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"/>
+                                    <TextBlock Grid.Column="2" Text="{Binding ColorRed, StringFormat={}{0:F0}}" Foreground="{DynamicResource SecondaryTextBrush}" FontSize="11" HorizontalAlignment="Right" VerticalAlignment="Center"/>
+
+                                    <TextBlock Grid.Row="1" Text="G" Foreground="#10B981" FontWeight="Bold" FontSize="11" VerticalAlignment="Center"/>
+                                    <Slider Grid.Row="1" Grid.Column="1" Minimum="0" Maximum="255" TickFrequency="1" IsSnapToTickEnabled="True" Value="{Binding ColorGreen, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"/>
+                                    <TextBlock Grid.Row="1" Grid.Column="2" Text="{Binding ColorGreen, StringFormat={}{0:F0}}" Foreground="{DynamicResource SecondaryTextBrush}" FontSize="11" HorizontalAlignment="Right" VerticalAlignment="Center"/>
+
+                                    <TextBlock Grid.Row="2" Text="B" Foreground="#2563EB" FontWeight="Bold" FontSize="11" VerticalAlignment="Center"/>
+                                    <Slider Grid.Row="2" Grid.Column="1" Minimum="0" Maximum="255" TickFrequency="1" IsSnapToTickEnabled="True" Value="{Binding ColorBlue, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"/>
+                                    <TextBlock Grid.Row="2" Grid.Column="2" Text="{Binding ColorBlue, StringFormat={}{0:F0}}" Foreground="{DynamicResource SecondaryTextBrush}" FontSize="11" HorizontalAlignment="Right" VerticalAlignment="Center"/>
+                                </Grid>
+                            </StackPanel>
+                        </Grid>
                     </StackPanel>
                     <StackPanel Grid.Column="4" Orientation="Horizontal" VerticalAlignment="Bottom">
-                        <Button Content="Xóa" Command="{Binding DeleteCommand}" Style="{StaticResource DangerButton}" Height="42" Padding="18,0" Margin="0,0,12,0"/>
-                        <Button Content="Lưu mục tiêu" Command="{Binding SaveCommand}" Style="{StaticResource GoalActionButton}"/>
+                        <Button Content="{DynamicResource DeleteText}" Command="{Binding DeleteCommand}" Style="{StaticResource DangerButton}" Height="42" Padding="18,0" Margin="0,0,12,0"/>
+                        <Button Content="{DynamicResource SaveGoalText}" Command="{Binding SaveCommand}" Style="{StaticResource GoalActionButton}"/>
                     </StackPanel>
                 </Grid>
                 <Grid Margin="0,12,0,0">
@@ -114,7 +161,7 @@
                         <ColumnDefinition Width="Auto"/>
                     </Grid.ColumnDefinitions>
                     <TextBox Text="{Binding AddAmount, UpdateSourceTrigger=PropertyChanged}"/>
-                    <Button Grid.Column="2" Content="Nạp tiền vào mục tiêu" Command="{Binding AddMoneyCommand}" Style="{StaticResource AccentButton}" Height="42" Padding="18,0" Margin="8,0,0,0"/>
+                    <Button Grid.Column="2" Content="{DynamicResource AddMoneyToGoalText}" Command="{Binding AddMoneyCommand}" Style="{StaticResource AccentButton}" Height="42" Padding="18,0" Margin="8,0,0,0"/>
                 </Grid>
             </StackPanel>
         </Border>
@@ -126,7 +173,7 @@
                         <materialDesign:PackIcon Kind="Target" Foreground="White" Width="19" Height="19" HorizontalAlignment="Center" VerticalAlignment="Center"/>
                     </Border>
                     <StackPanel>
-                        <TextBlock Text="Mục tiêu đang theo dõi" Foreground="{DynamicResource SecondaryTextBrush}" FontSize="12"/>
+                        <TextBlock Text="{DynamicResource TrackedGoalsText}" Foreground="{DynamicResource SecondaryTextBrush}" FontSize="12"/>
                         <TextBlock Text="{Binding TrackedGoalsText}" Foreground="{DynamicResource PrimaryTextBrush}" FontSize="23" FontWeight="Bold" Margin="0,5,0,0"/>
                         <TextBlock Text="{Binding CompletionText}" Foreground="{DynamicResource LightTextBrush}" FontSize="11" Margin="0,6,0,0"/>
                     </StackPanel>
@@ -138,9 +185,9 @@
                         <materialDesign:PackIcon Kind="CalendarCheck" Foreground="White" Width="19" Height="19" HorizontalAlignment="Center" VerticalAlignment="Center"/>
                     </Border>
                     <StackPanel>
-                        <TextBlock Text="Tổng mục tiêu" Foreground="{DynamicResource SecondaryTextBrush}" FontSize="12"/>
+                        <TextBlock Text="{DynamicResource TotalGoalsText}" Foreground="{DynamicResource SecondaryTextBrush}" FontSize="12"/>
                         <TextBlock Text="{Binding TotalTargetText}" Foreground="{DynamicResource PrimaryTextBrush}" FontSize="20" FontWeight="Bold" Margin="0,5,0,0"/>
-                        <TextBlock Text="Giá trị cần tích lũy" Foreground="{DynamicResource LightTextBrush}" FontSize="11" Margin="0,6,0,0"/>
+                        <TextBlock Text="{DynamicResource TargetValueText}" Foreground="{DynamicResource LightTextBrush}" FontSize="11" Margin="0,6,0,0"/>
                     </StackPanel>
                 </DockPanel>
             </Border>
@@ -150,15 +197,15 @@
                         <materialDesign:PackIcon Kind="TrendingUp" Foreground="White" Width="19" Height="19" HorizontalAlignment="Center" VerticalAlignment="Center"/>
                     </Border>
                     <StackPanel>
-                        <TextBlock Text="Đã tiết kiệm" Foreground="{DynamicResource SecondaryTextBrush}" FontSize="12"/>
+                        <TextBlock Text="{DynamicResource SavedText}" Foreground="{DynamicResource SecondaryTextBrush}" FontSize="12"/>
                         <TextBlock Text="{Binding SavedAmountText}" Foreground="#059669" FontSize="20" FontWeight="Bold" Margin="0,5,0,0"/>
-                        <TextBlock Text="Tổng tiền đã phân bổ" Foreground="{DynamicResource LightTextBrush}" FontSize="11" Margin="0,6,0,0"/>
+                        <TextBlock Text="{DynamicResource AllocatedTotalText}" Foreground="{DynamicResource LightTextBrush}" FontSize="11" Margin="0,6,0,0"/>
                     </StackPanel>
                 </DockPanel>
             </Border>
         </UniformGrid>
 
-        <TextBlock Text="Mục tiêu đang theo dõi" Foreground="{DynamicResource PrimaryTextBrush}" FontWeight="SemiBold" FontSize="16" Margin="0,0,0,9"/>
+        <TextBlock Text="{DynamicResource TrackedGoalsText}" Foreground="{DynamicResource PrimaryTextBrush}" FontWeight="SemiBold" FontSize="16" Margin="0,0,0,9"/>
         <Grid>
             <ItemsControl ItemsSource="{Binding ActiveGoals}">
                 <ItemsControl.ItemsPanel>
@@ -177,14 +224,14 @@
                                             Style="{StaticResource GoalSecondaryButton}"
                                             Height="32"
                                             Padding="10,0"
-                                            Content="Chỉnh sửa"/>
+                                            Content="{DynamicResource EditText}"/>
                                     <StackPanel>
                                         <TextBlock Text="{Binding Name}" Foreground="{DynamicResource PrimaryTextBrush}" FontWeight="Bold" FontSize="14"/>
                                         <TextBlock Text="{Binding DeadlineText}" Foreground="{DynamicResource SecondaryTextBrush}" FontSize="11" Margin="0,4,0,0"/>
                                     </StackPanel>
                                 </DockPanel>
                                 <Grid Margin="0,13,0,5">
-                                    <TextBlock Text="Tiến độ" Foreground="{DynamicResource SecondaryTextBrush}" FontSize="11"/>
+                                    <TextBlock Text="{DynamicResource ProgressText}" Foreground="{DynamicResource SecondaryTextBrush}" FontSize="11"/>
                                     <TextBlock Text="{Binding ProgressText}" Foreground="{DynamicResource PrimaryTextBrush}" FontWeight="Bold" FontSize="15" HorizontalAlignment="Right"/>
                                 </Grid>
                                 <ProgressBar Value="{Binding ProgressPercent, Mode=OneWay}" Maximum="100" Height="7" Background="{DynamicResource MutedCardBrush}" Foreground="{Binding AccentBrush}"/>
@@ -197,7 +244,7 @@
                     </DataTemplate>
                 </ItemsControl.ItemTemplate>
             </ItemsControl>
-            <TextBlock Text="Chưa có mục tiêu đang theo dõi."
+            <TextBlock Text="{DynamicResource NoActiveGoalsText}"
                        Foreground="{DynamicResource SecondaryTextBrush}"
                        HorizontalAlignment="Center"
                        Margin="0,16">
@@ -214,7 +261,7 @@
             </TextBlock>
         </Grid>
 
-        <TextBlock Text="Mục tiêu đã hoàn thành" Foreground="{DynamicResource PrimaryTextBrush}" FontWeight="SemiBold" FontSize="16" Margin="0,5,0,9"/>
+        <TextBlock Text="{DynamicResource CompletedGoalsText}" Foreground="{DynamicResource PrimaryTextBrush}" FontWeight="SemiBold" FontSize="16" Margin="0,5,0,9"/>
         <ItemsControl ItemsSource="{Binding CompletedGoals}">
             <ItemsControl.ItemsPanel>
                 <ItemsPanelTemplate>
@@ -246,8 +293,8 @@
                     <materialDesign:PackIcon Kind="LightbulbOnOutline" Foreground="White" Width="19" Height="19" HorizontalAlignment="Center" VerticalAlignment="Center"/>
                 </Border>
                 <StackPanel Margin="12,0,0,0">
-                    <TextBlock Text="Mẹo đạt mục tiêu nhanh hơn" Foreground="{DynamicResource PrimaryTextBrush}" FontWeight="SemiBold" FontSize="13"/>
-                    <TextBlock Text="Đặt mục tiêu rõ ràng, theo dõi tiến độ thường xuyên và chia nhỏ số tiền cần tích lũy theo tháng."
+                    <TextBlock Text="{DynamicResource GoalTipTitle}" Foreground="{DynamicResource PrimaryTextBrush}" FontWeight="SemiBold" FontSize="13"/>
+                    <TextBlock Text="{DynamicResource GoalTipText}"
                                Foreground="{DynamicResource SecondaryTextBrush}"
                                FontSize="11"
                                Margin="0,5,0,0"/>
@@ -256,3 +303,4 @@
         </Border>
     </StackPanel>
 </UserControl>
+

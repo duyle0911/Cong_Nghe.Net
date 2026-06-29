@@ -19,6 +19,7 @@ namespace QuanLyTaiChinhCaNhan_Nhom06.ViewModels
         private string _message = string.Empty;
         private bool _isDarkMode;
         private string _selectedAccentColor;
+        private string _selectedBackgroundTheme;
         private string _selectedLanguageCode;
 
         public ProfileViewModel(IAuthenticationService authService, IAppearanceService appearanceService)
@@ -30,7 +31,14 @@ namespace QuanLyTaiChinhCaNhan_Nhom06.ViewModels
             Avatar = authService.CurrentUser?.Avatar ?? string.Empty;
             _isDarkMode = appearanceService.Settings.IsDarkMode;
             _selectedAccentColor = appearanceService.Settings.AccentColor;
+            _selectedBackgroundTheme = appearanceService.Settings.BackgroundTheme;
             _selectedLanguageCode = appearanceService.Settings.LanguageCode;
+            _appearanceService.SettingsChanged += (_, _) =>
+            {
+                OnPropertyChanged(nameof(AccentColors));
+                OnPropertyChanged(nameof(BackgroundThemes));
+                OnPropertyChanged(nameof(MemberSinceText));
+            };
             SaveProfileCommand = new AsyncRelayCommand(_ => SaveProfileAsync());
             ChooseAvatarCommand = new RelayCommand(_ => ChooseAvatar());
             ClearAvatarCommand = new RelayCommand(_ => ClearAvatar(), _ => HasAvatar);
@@ -40,7 +48,7 @@ namespace QuanLyTaiChinhCaNhan_Nhom06.ViewModels
 
         public string Username => _authService.CurrentUser?.Username ?? string.Empty;
         public string Initials => CreateInitials(FullName, Username);
-        public string MemberSinceText => $"Thành viên từ {_authService.CurrentUser?.CreatedAt:dd/MM/yyyy}";
+        public string MemberSinceText => _appearanceService.Format("ProfileMemberSinceFormat", _authService.CurrentUser?.CreatedAt ?? DateTime.Now);
         public string FullName
         {
             get => _fullName;
@@ -87,6 +95,15 @@ namespace QuanLyTaiChinhCaNhan_Nhom06.ViewModels
                     _appearanceService.SetAccentColor(value);
             }
         }
+        public string SelectedBackgroundTheme
+        {
+            get => _selectedBackgroundTheme;
+            set
+            {
+                if (SetProperty(ref _selectedBackgroundTheme, value))
+                    _appearanceService.SetBackgroundTheme(value);
+            }
+        }
         public string SelectedLanguageCode
         {
             get => _selectedLanguageCode;
@@ -96,7 +113,14 @@ namespace QuanLyTaiChinhCaNhan_Nhom06.ViewModels
                     _appearanceService.SetLanguage(value);
             }
         }
-        public IReadOnlyList<AccentColorOption> AccentColors => _appearanceService.AccentColors;
+        public IReadOnlyList<AccentColorDisplayOption> AccentColors => _appearanceService.AccentColors
+            .Select(item => new AccentColorDisplayOption(item.Name, _appearanceService.GetAccentColorDisplayName(item), item.PrimaryColor, item.SecondaryColor))
+            .ToList();
+        public IReadOnlyList<AccentColorDisplayOption> BackgroundThemes => _appearanceService.BackgroundThemes
+            .Select(item => _appearanceService.Settings.IsDarkMode
+                ? new AccentColorDisplayOption(item.Name, _appearanceService.GetBackgroundThemeDisplayName(item), item.DarkCard, item.DarkMuted)
+                : new AccentColorDisplayOption(item.Name, _appearanceService.GetBackgroundThemeDisplayName(item), item.PreviewColor, item.SecondaryColor))
+            .ToList();
         public IReadOnlyList<LanguageOption> Languages => _appearanceService.Languages;
         public ICommand SaveProfileCommand { get; }
         public ICommand ChooseAvatarCommand { get; }
@@ -105,25 +129,33 @@ namespace QuanLyTaiChinhCaNhan_Nhom06.ViewModels
         public ICommand SaveAppearanceCommand { get; }
         public event EventHandler? PasswordChangeSucceeded;
 
+        public override void RefreshLocalization()
+        {
+            OnPropertyChanged(nameof(AccentColors));
+            OnPropertyChanged(nameof(BackgroundThemes));
+            OnPropertyChanged(nameof(Languages));
+            OnPropertyChanged(nameof(MemberSinceText));
+        }
+
         private async Task SaveProfileAsync()
         {
             Email = Email.Trim();
 
             if (!Validator.Email(Email))
             {
-                Message = "Email không hợp lệ.";
+                Message = _appearanceService.T("InvalidEmailMessage");
                 return;
             }
 
             if (await _authService.UpdateProfileAsync(FullName, Email, Avatar))
             {
-                Message = "Đã lưu hồ sơ.";
+                Message = _appearanceService.T("ProfileSavedMessage");
                 OnPropertyChanged(nameof(Initials));
                 OnPropertyChanged(nameof(HasAvatar));
             }
             else
             {
-                Message = "Không thể lưu hồ sơ. Email có thể đã tồn tại.";
+                Message = _appearanceService.T("ProfileSaveFailedMessage");
             }
         }
 
@@ -131,28 +163,28 @@ namespace QuanLyTaiChinhCaNhan_Nhom06.ViewModels
         {
             var dialog = new OpenFileDialog
             {
-                Title = "Chọn ảnh đại diện",
-                Filter = "Ảnh đại diện (*.png;*.jpg;*.jpeg)|*.png;*.jpg;*.jpeg|Tất cả tệp (*.*)|*.*"
+                Title = _appearanceService.T("ChooseAvatarDialogTitle"),
+                Filter = _appearanceService.T("AvatarFilterText")
             };
 
             if (dialog.ShowDialog() != true)
                 return;
 
             Avatar = dialog.FileName;
-            Message = "Đã chọn ảnh đại diện. Nhấn Lưu thay đổi để cập nhật hồ sơ.";
+            Message = _appearanceService.T("ProfileAvatarSelectedMessage");
         }
 
         private void ClearAvatar()
         {
             Avatar = string.Empty;
-            Message = "Đã gỡ ảnh đại diện. Nhấn Lưu thay đổi để cập nhật hồ sơ.";
+            Message = _appearanceService.T("ProfileAvatarClearedMessage");
         }
 
         private async Task ChangePasswordAsync()
         {
             if (NewPassword != ConfirmPassword)
             {
-                Message = "Mật khẩu xác nhận không khớp.";
+                Message = _appearanceService.T("PasswordMismatchMessage");
                 return;
             }
 
@@ -171,7 +203,7 @@ namespace QuanLyTaiChinhCaNhan_Nhom06.ViewModels
         private void SaveAppearance()
         {
             _appearanceService.Save();
-            Message = "Đã lưu tùy chỉnh giao diện và ngôn ngữ.";
+            Message = _appearanceService.T("ProfileSavedAppearanceMessage");
         }
 
         private static string CreateInitials(string fullName, string username)
@@ -187,3 +219,5 @@ namespace QuanLyTaiChinhCaNhan_Nhom06.ViewModels
         }
     }
 }
+
+

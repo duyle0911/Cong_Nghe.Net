@@ -12,6 +12,7 @@ namespace QuanLyTaiChinhCaNhan_Nhom06.ViewModels
     {
         private readonly IBudgetService _budgetService;
         private readonly ICategoryService _categoryService;
+        private readonly IAppearanceService _appearanceService;
         private readonly ISessionContext _sessionContext;
         private Budget? _selectedBudget;
         private Category? _selectedCategory;
@@ -20,17 +21,20 @@ namespace QuanLyTaiChinhCaNhan_Nhom06.ViewModels
         private DateTime _endDate = DateTimeHelper.EndOfMonth(DateTime.Now);
         private bool _isEditorOpen;
         private bool _hasBudgets;
-        private string _editorTitle = "Tạo ngân sách";
+        private string _editorTitle = string.Empty;
         private string _totalBudgetText = "0 ₫";
         private string _totalSpentText = "0 ₫";
         private string _remainingText = "0 ₫";
-        private string _spentRateText = "0% ngân sách đã sử dụng";
+        private string _spentRateText = string.Empty;
 
-        public BudgetViewModel(IBudgetService budgetService, ICategoryService categoryService, ISessionContext sessionContext)
+        public BudgetViewModel(IBudgetService budgetService, ICategoryService categoryService, IAppearanceService appearanceService, ISessionContext sessionContext)
         {
             _budgetService = budgetService;
             _categoryService = categoryService;
+            _appearanceService = appearanceService;
             _sessionContext = sessionContext;
+            EditorTitle = _appearanceService.T("CreateBudgetTitle");
+            SpentRateText = _appearanceService.Format("BudgetUsedFormat", 0);
             Budgets = new ObservableCollection<Budget>();
             BudgetOverviews = new ObservableCollection<BudgetOverview>();
             Categories = new ObservableCollection<Category>();
@@ -78,20 +82,28 @@ namespace QuanLyTaiChinhCaNhan_Nhom06.ViewModels
         public ICommand CancelCommand { get; }
         public ICommand EditCommand { get; }
 
+        public override void RefreshLocalization()
+        {
+            _ = RunSafeAsync(LoadAsync);
+        }
+
         private async Task LoadAsync()
         {
             var userId = _sessionContext.CurrentUserId ?? 0;
 
             Categories.Clear();
             foreach (var item in await _categoryService.GetCategoriesAsync(userId, TransactionType.Expense))
+            {
+                item.DisplayName = _appearanceService.LocalizeCategoryName(item.Name, item.Type);
                 Categories.Add(item);
+            }
 
             Budgets.Clear();
             BudgetOverviews.Clear();
             foreach (var item in await _budgetService.GetBudgetsAsync(userId))
             {
                 Budgets.Add(item);
-                BudgetOverviews.Add(new BudgetOverview(item));
+                BudgetOverviews.Add(new BudgetOverview(item, _appearanceService));
             }
 
             HasBudgets = BudgetOverviews.Any();
@@ -100,14 +112,14 @@ namespace QuanLyTaiChinhCaNhan_Nhom06.ViewModels
             TotalBudgetText = DashboardPresentation.FormatMoney(totalBudget);
             TotalSpentText = DashboardPresentation.FormatMoney(totalSpent);
             RemainingText = DashboardPresentation.FormatMoney(totalBudget - totalSpent);
-            SpentRateText = $"{(totalBudget > 0 ? totalSpent / totalBudget * 100 : 0):N0}% ngân sách đã sử dụng";
+            SpentRateText = _appearanceService.Format("BudgetUsedFormat", totalBudget > 0 ? totalSpent / totalBudget * 100 : 0);
         }
 
         private async Task SaveAsync()
         {
             if (SelectedCategory == null || Amount <= 0 || StartDate > EndDate)
             {
-                DialogHelper.Error("Vui lòng chọn danh mục, nhập hạn mức > 0 và ngày hợp lệ.");
+                DialogHelper.Error(_appearanceService.T("BudgetInputInvalid"));
                 return;
             }
 
@@ -125,7 +137,7 @@ namespace QuanLyTaiChinhCaNhan_Nhom06.ViewModels
 
             if (!ok)
             {
-                DialogHelper.Error("Không thể lưu ngân sách. Kiểm tra thời gian trùng hoặc hạn mức.");
+                DialogHelper.Error(_appearanceService.T("BudgetSaveFailed"));
                 return;
             }
 
@@ -135,7 +147,7 @@ namespace QuanLyTaiChinhCaNhan_Nhom06.ViewModels
 
         private async Task DeleteAsync()
         {
-            if (SelectedBudget == null || !DialogHelper.Confirm("Xóa ngân sách đang chọn?"))
+            if (SelectedBudget == null || !DialogHelper.Confirm(_appearanceService.T("BudgetDeleteConfirm")))
                 return;
 
             var result = await _budgetService.DeleteBudgetAsync(SelectedBudget.Id, _sessionContext.CurrentUserId ?? 0);
@@ -152,7 +164,7 @@ namespace QuanLyTaiChinhCaNhan_Nhom06.ViewModels
         private void OpenNewEditor()
         {
             ClearForm();
-            EditorTitle = "Tạo ngân sách";
+            EditorTitle = _appearanceService.T("CreateBudgetTitle");
             IsEditorOpen = true;
         }
 
@@ -162,7 +174,7 @@ namespace QuanLyTaiChinhCaNhan_Nhom06.ViewModels
                 return;
 
             SelectedBudget = budget;
-            EditorTitle = "Chỉnh sửa ngân sách";
+            EditorTitle = _appearanceService.T("EditBudgetTitle");
             IsEditorOpen = true;
         }
 
@@ -184,21 +196,21 @@ namespace QuanLyTaiChinhCaNhan_Nhom06.ViewModels
 
     public class BudgetOverview
     {
-        public BudgetOverview(Budget budget)
+        public BudgetOverview(Budget budget, IAppearanceService appearanceService)
         {
             Budget = budget;
-            Name = budget.Category?.Name ?? budget.Name;
+            Name = budget.Category == null ? budget.Name : appearanceService.LocalizeCategoryName(budget.Category.Name, budget.Category.Type);
             AmountText = DashboardPresentation.FormatMoney(budget.Amount);
             SpentText = DashboardPresentation.FormatMoney(budget.SpentAmount);
             RemainingText = DashboardPresentation.FormatMoney(budget.RemainingAmount);
             UsedPercent = budget.UsedPercent;
-            ProgressText = $"{UsedPercent:N0}% đã sử dụng";
-            PeriodText = $"{budget.StartDate:dd/MM/yyyy} - {budget.EndDate:dd/MM/yyyy}";
+            ProgressText = appearanceService.Format("UsedPercentFormat", UsedPercent);
+            PeriodText = $"{budget.StartDate.ToString("d", System.Globalization.CultureInfo.CurrentCulture)} - {budget.EndDate.ToString("d", System.Globalization.CultureInfo.CurrentCulture)}";
             var color = budget.Category?.Color ?? "#06B6D4";
             AccentBrush = DashboardPresentation.CreateBrush(color);
             ProgressBrush = DashboardPresentation.CreateBrush(
                 UsedPercent >= 100 ? "#EF4444" : UsedPercent >= 80 ? "#F59E0B" : color);
-            StatusText = UsedPercent >= 100 ? "Vượt ngân sách" : UsedPercent >= 80 ? "Cần chú ý" : "Đang ổn";
+            StatusText = UsedPercent >= 100 ? appearanceService.T("OverBudgetStatus") : UsedPercent >= 80 ? appearanceService.T("NeedsAttentionStatus") : appearanceService.T("GoodStatus");
             StatusBrush = DashboardPresentation.CreateBrush(
                 UsedPercent >= 100 ? "#EF4444" : UsedPercent >= 80 ? "#D97706" : "#059669");
         }
@@ -217,3 +229,5 @@ namespace QuanLyTaiChinhCaNhan_Nhom06.ViewModels
         public Brush StatusBrush { get; }
     }
 }
+
+

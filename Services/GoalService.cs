@@ -6,15 +6,18 @@ namespace QuanLyTaiChinhCaNhan_Nhom06.Services
 {
     public class GoalService : IGoalService
     {
+        private const string GoalCategoryStorageName = "\u004D\u1EE5c ti\u00EAu";
         private readonly IDbContextFactory<ExpenseDbContext> _dbFactory;
         private readonly IDataService _dataService;
         private readonly IBudgetService _budgetService;
+        private readonly IAppearanceService _appearanceService;
 
-        public GoalService(IDbContextFactory<ExpenseDbContext> dbFactory, IDataService dataService, IBudgetService budgetService)
+        public GoalService(IDbContextFactory<ExpenseDbContext> dbFactory, IDataService dataService, IBudgetService budgetService, IAppearanceService appearanceService)
         {
             _dbFactory = dbFactory;
             _dataService = dataService;
             _budgetService = budgetService;
+            _appearanceService = appearanceService;
         }
 
         public async Task<List<Goal>> GetGoalsAsync(int userId)
@@ -118,21 +121,21 @@ namespace QuanLyTaiChinhCaNhan_Nhom06.Services
             try
             {
                 if (amount <= 0)
-                    return (false, "Số tiền phải lớn hơn 0.");
+                    return (false, _appearanceService.T("AmountGreaterThanZero"));
 
                 await using var context = await _dbFactory.CreateDbContextAsync();
                 var goal = await context.Goals
                     .FirstOrDefaultAsync(g => g.Id == goalId && g.UserId == userId);
 
                 if (goal == null)
-                    return (false, "Không tìm thấy mục tiêu.");
+                    return (false, _appearanceService.T("NotFoundGoal"));
 
                 if (goal.CurrentAmount >= goal.TargetAmount)
-                    return (false, "Mục tiêu này đã hoàn thành.");
+                    return (false, _appearanceService.T("GoalAlreadyCompleted"));
 
                 var remainingTarget = goal.TargetAmount - goal.CurrentAmount;
                 if (amount > remainingTarget)
-                    return (false, $"Số tiền thêm vào vượt quá số còn thiếu của mục tiêu: {remainingTarget:N0} ₫.");
+                    return (false, _appearanceService.Format("GoalAddExceedsRemainingFormat", string.Format(System.Globalization.CultureInfo.CurrentCulture, "{0:N0} ₫", remainingTarget)));
 
                 var summary = await _dataService.GetFinancialSummaryAsync(userId);
                 var allocatedAmount = await context.Goals
@@ -143,15 +146,15 @@ namespace QuanLyTaiChinhCaNhan_Nhom06.Services
 
                 if (amount > availableBalance)
                 {
-                    return (false, $"Số dư khả dụng không đủ!\n\n" +
-                                  $"Số dư hiện tại: {summary.TotalBalance:N0} ₫\n" +
-                                  $"Đã phân bổ vào mục tiêu: {allocatedAmount:N0} ₫\n" +
-                                  $"Số dư khả dụng: {availableBalance:N0} ₫\n" +
-                                  $"Số tiền muốn thêm: {amount:N0} ₫");
+                    return (false, _appearanceService.Format("InsufficientBalanceFormat",
+                        string.Format(System.Globalization.CultureInfo.CurrentCulture, "{0:N0} ₫", summary.TotalBalance),
+                        string.Format(System.Globalization.CultureInfo.CurrentCulture, "{0:N0} ₫", allocatedAmount),
+                        string.Format(System.Globalization.CultureInfo.CurrentCulture, "{0:N0} ₫", availableBalance),
+                        string.Format(System.Globalization.CultureInfo.CurrentCulture, "{0:N0} ₫", amount)));
                 }
 
                 var goalCategory = await context.Categories
-                    .FirstOrDefaultAsync(c => c.Name == "Mục tiêu"
+                    .FirstOrDefaultAsync(c => c.Name == GoalCategoryStorageName
                         && c.UserId == userId
                         && c.Type == TransactionType.Expense);
 
@@ -159,7 +162,7 @@ namespace QuanLyTaiChinhCaNhan_Nhom06.Services
                 {
                     goalCategory = new Category
                     {
-                        Name = "Mục tiêu",
+                        Name = GoalCategoryStorageName,
                         Color = "#FF9800",
                         Icon = "Target",
                         Type = TransactionType.Expense,
@@ -173,7 +176,7 @@ namespace QuanLyTaiChinhCaNhan_Nhom06.Services
                 var transaction = new Transaction
                 {
                     Amount = amount,
-                    Description = $"Phân bổ vào mục tiêu: {goal.Name}",
+                    Description = _appearanceService.Format("GoalAllocationDescriptionFormat", goal.Name),
                     Type = TransactionType.Expense,
                     Category = goalCategory,
                     UserId = userId,
@@ -195,14 +198,14 @@ namespace QuanLyTaiChinhCaNhan_Nhom06.Services
                 await _budgetService.UpdateBudgetSpentAmountAsync(goalCategory.Id, userId, 0, transaction.Date);
 
                 var message = goal.CurrentAmount >= goal.TargetAmount
-                    ? $"Chúc mừng! Bạn đã hoàn thành mục tiêu '{goal.Name}'!"
-                    : $"Đã thêm {amount:N0} ₫ vào mục tiêu '{goal.Name}'!";
+                    ? _appearanceService.Format("GoalCompletedMessageFormat", goal.Name)
+                    : _appearanceService.Format("GoalAddedMoneyMessageFormat", string.Format(System.Globalization.CultureInfo.CurrentCulture, "{0:N0} ₫", amount), goal.Name);
 
                 return (true, message);
             }
             catch (Exception ex)
             {
-                return (false, $"Lỗi khi thêm tiền vào mục tiêu: {ex.Message}");
+                return (false, _appearanceService.Format("GenericErrorFormat", ex.Message));
             }
         }
 
@@ -214,17 +217,19 @@ namespace QuanLyTaiChinhCaNhan_Nhom06.Services
         public string GetGoalStatus(Goal goal)
         {
             if (goal.IsCompleted)
-                return "Hoàn thành";
+                return _appearanceService.T("CompletedGoalsText");
 
             var now = DateTime.Now;
             if (goal.TargetDate < now)
-                return "Quá hạn";
+                return _appearanceService.T("OverBudgetStatus");
 
             var daysLeft = (goal.TargetDate - now).Days;
             if (daysLeft <= 7)
-                return "Sắp hết hạn";
+                return _appearanceService.T("NeedsAttentionStatus");
 
-            return "Đang thực hiện";
+            return _appearanceService.T("GoodStatus");
         }
     }
 }
+
+

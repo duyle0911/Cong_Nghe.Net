@@ -1,4 +1,4 @@
-﻿using System.Windows;
+using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
 using QuanLyTaiChinhCaNhan_Nhom06.ViewModels;
@@ -13,6 +13,7 @@ namespace QuanLyTaiChinhCaNhan_Nhom06.Views
         public LoginView()
         {
             InitializeComponent();
+            RefreshPasswordPlaceholder();
         }
 
         private void PasswordBox_PasswordChanged(object sender, RoutedEventArgs e)
@@ -31,6 +32,8 @@ namespace QuanLyTaiChinhCaNhan_Nhom06.Views
                     _isSyncingPassword = false;
                 }
             }
+
+            RefreshPasswordPlaceholder();
         }
 
         private void VisiblePasswordInput_TextChanged(object sender, TextChangedEventArgs e)
@@ -49,6 +52,8 @@ namespace QuanLyTaiChinhCaNhan_Nhom06.Views
                     _isSyncingPassword = false;
                 }
             }
+
+            RefreshPasswordPlaceholder();
         }
 
         private void TogglePasswordVisibility_Click(object sender, MouseButtonEventArgs e)
@@ -75,12 +80,18 @@ namespace QuanLyTaiChinhCaNhan_Nhom06.Views
 
                 VisiblePasswordInput.Visibility = Visibility.Collapsed;
                 PasswordInput.Visibility = Visibility.Visible;
-                PasswordVisibilityIcon.Opacity = 0.7;
+                PasswordVisibilityIcon.Opacity = 0.72;
                 PasswordInput.Focus();
             }
 
+            RefreshPasswordPlaceholder();
             e.Handled = true;
         }
 
+        private void RefreshPasswordPlaceholder()
+        {
+            var text = _isPasswordVisible ? VisiblePasswordInput.Text : PasswordInput.Password;
+            PasswordPlaceholder.Visibility = string.IsNullOrEmpty(text) ? Visibility.Visible : Visibility.Collapsed;
+        }
     }
 }

@@ -1,4 +1,4 @@
-using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.EntityFrameworkCore;
 using QuanLyTaiChinhCaNhan_Nhom06.Data;
 using QuanLyTaiChinhCaNhan_Nhom06.Models;
 
@@ -7,10 +7,12 @@ namespace QuanLyTaiChinhCaNhan_Nhom06.Services
     public class BudgetService : IBudgetService
     {
         private readonly IDbContextFactory<ExpenseDbContext> _dbFactory;
+        private readonly IAppearanceService _appearanceService;
 
-        public BudgetService(IDbContextFactory<ExpenseDbContext> dbFactory)
+        public BudgetService(IDbContextFactory<ExpenseDbContext> dbFactory, IAppearanceService appearanceService)
         {
             _dbFactory = dbFactory;
+            _appearanceService = appearanceService;
         }
 
         public async Task<List<Budget>> GetBudgetsAsync(int userId)
@@ -108,7 +110,7 @@ namespace QuanLyTaiChinhCaNhan_Nhom06.Services
                     return false;
 
                 budget.UserId = userId;
-                budget.Name = string.IsNullOrWhiteSpace(budget.Name) ? "Ngân sách" : budget.Name.Trim();
+                budget.Name = string.IsNullOrWhiteSpace(budget.Name) ? _appearanceService.T("DefaultBudgetName") : budget.Name.Trim();
                 budget.StartDate = budget.StartDate.Date;
                 budget.EndDate = budget.EndDate.Date;
                 budget.SpentAmount = 0;
@@ -173,7 +175,7 @@ namespace QuanLyTaiChinhCaNhan_Nhom06.Services
                 var budget = await context.Budgets.FirstOrDefaultAsync(b => b.Id == budgetId && b.UserId == userId);
 
                 if (budget == null)
-                    return (false, "Không tìm thấy ngân sách.");
+                    return (false, _appearanceService.T("NotFoundBudget"));
 
                 var transactions = await context.Transactions
                     .Where(t => t.BudgetId == budgetId && t.UserId == userId)
@@ -184,11 +186,11 @@ namespace QuanLyTaiChinhCaNhan_Nhom06.Services
 
                 context.Budgets.Remove(budget);
                 await context.SaveChangesAsync();
-                return (true, "Đã xóa ngân sách thành công.");
+                return (true, string.Empty);
             }
             catch (Exception ex)
             {
-                return (false, $"Lỗi khi xóa ngân sách: {ex.Message}");
+                return (false, _appearanceService.Format("GenericErrorFormat", ex.Message));
             }
         }
 
@@ -224,12 +226,12 @@ namespace QuanLyTaiChinhCaNhan_Nhom06.Services
             foreach (var budget in budgets.Where(b => b.IsActive))
             {
                 var percentage = budget.Amount > 0 ? budget.SpentAmount / budget.Amount * 100 : 0;
-                var name = budget.Category?.Name ?? budget.Name;
+                var name = budget.Category == null ? budget.Name : _appearanceService.LocalizeCategoryName(budget.Category.Name, budget.Category.Type);
 
                 if (percentage >= 100)
-                    result.OverBudgetItems.Add($"{name}: đã vượt {percentage:F1}%");
+                    result.OverBudgetItems.Add(_appearanceService.Format("BudgetOverFormat", name, percentage));
                 else if (percentage >= 80)
-                    result.WarningItems.Add($"{name}: đã dùng {percentage:F1}%");
+                    result.WarningItems.Add(_appearanceService.Format("BudgetWarningFormat", name, percentage));
             }
 
             return result;
@@ -276,3 +278,4 @@ namespace QuanLyTaiChinhCaNhan_Nhom06.Services
         }
     }
 }
+

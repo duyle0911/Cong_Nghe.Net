@@ -1,4 +1,4 @@
-<UserControl x:Class="QuanLyTaiChinhCaNhan_Nhom06.Views.ReportView"
+﻿<UserControl x:Class="QuanLyTaiChinhCaNhan_Nhom06.Views.ReportView"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes"
@@ -41,7 +41,7 @@
                     Padding="15,0">
                 <StackPanel Orientation="Horizontal">
                     <materialDesign:PackIcon Kind="Download" Width="17" Height="17" Margin="0,0,7,0"/>
-                    <TextBlock Text="Xuất báo cáo"/>
+                    <TextBlock Text="{DynamicResource ExportReportText}"/>
                 </StackPanel>
             </Button>
         </Grid>
@@ -67,10 +67,10 @@
                                          VerticalAlignment="Center"
                                          Margin="0,0,8,0"/>
                 <DatePicker Grid.Column="1" SelectedDate="{Binding FromDate}" MinHeight="38"/>
-                <TextBlock Grid.Column="3" Text="đến" Foreground="{StaticResource SecondaryTextBrush}" VerticalAlignment="Center" Margin="0,0,8,0"/>
+                <TextBlock Grid.Column="3" Text="{DynamicResource FromToText}" Foreground="{StaticResource SecondaryTextBrush}" VerticalAlignment="Center" Margin="0,0,8,0"/>
                 <DatePicker Grid.Column="4" SelectedDate="{Binding ToDate}" MinHeight="38"/>
                 <Button Grid.Column="6"
-                        Content="Lọc"
+                        Content="{DynamicResource FilterText}"
                         Command="{Binding FilterCommand}"
                         Style="{StaticResource SecondaryButton}"
                         Height="40"
@@ -78,9 +78,9 @@
                         Margin="10,0,0,0"/>
 
                 <StackPanel Grid.Column="8" Orientation="Horizontal">
-                    <Button Content="Tháng" Command="{Binding SelectPeriodCommand}" CommandParameter="Month" Style="{StaticResource PeriodButton}"/>
-                    <Button Content="Quý" Command="{Binding SelectPeriodCommand}" CommandParameter="Quarter" Style="{StaticResource PeriodButton}"/>
-                    <Button Content="Năm" Command="{Binding SelectPeriodCommand}" CommandParameter="Year" Style="{StaticResource PeriodButton}"/>
+                    <Button Content="{DynamicResource MonthText}" Command="{Binding SelectPeriodCommand}" CommandParameter="Month" Style="{StaticResource PeriodButton}"/>
+                    <Button Content="{DynamicResource QuarterText}" Command="{Binding SelectPeriodCommand}" CommandParameter="Quarter" Style="{StaticResource PeriodButton}"/>
+                    <Button Content="{DynamicResource YearText}" Command="{Binding SelectPeriodCommand}" CommandParameter="Year" Style="{StaticResource PeriodButton}"/>
                 </StackPanel>
             </Grid>
         </Border>
@@ -93,7 +93,7 @@
                         <ColumnDefinition Width="44"/>
                     </Grid.ColumnDefinitions>
                     <StackPanel>
-                        <TextBlock Text="Tổng thu nhập" Foreground="{StaticResource SecondaryTextBrush}" FontSize="12"/>
+                        <TextBlock Text="{DynamicResource ReportTotalIncomeText}" Foreground="{StaticResource SecondaryTextBrush}" FontSize="12"/>
                         <TextBlock Text="{Binding Income}" Foreground="#10B981" FontSize="22" FontWeight="Bold" Margin="0,6,0,0"/>
                         <TextBlock Text="{Binding IncomeChangeText}" Foreground="{StaticResource SecondaryTextBrush}" FontSize="11" Margin="0,8,0,0"/>
                     </StackPanel>
@@ -110,7 +110,7 @@
                         <ColumnDefinition Width="44"/>
                     </Grid.ColumnDefinitions>
                     <StackPanel>
-                        <TextBlock Text="Tổng chi tiêu" Foreground="{StaticResource SecondaryTextBrush}" FontSize="12"/>
+                        <TextBlock Text="{DynamicResource ReportTotalExpenseText}" Foreground="{StaticResource SecondaryTextBrush}" FontSize="12"/>
                         <TextBlock Text="{Binding Expense}" Foreground="{StaticResource DangerBrush}" FontSize="22" FontWeight="Bold" Margin="0,6,0,0"/>
                         <TextBlock Text="{Binding ExpenseChangeText}" Foreground="{StaticResource SecondaryTextBrush}" FontSize="11" Margin="0,8,0,0"/>
                     </StackPanel>
@@ -127,7 +127,7 @@
                         <ColumnDefinition Width="44"/>
                     </Grid.ColumnDefinitions>
                     <StackPanel>
-                        <TextBlock Text="Tổng tiết kiệm" Foreground="{StaticResource SecondaryTextBrush}" FontSize="12"/>
+                        <TextBlock Text="{DynamicResource ReportTotalSavingsText}" Foreground="{StaticResource SecondaryTextBrush}" FontSize="12"/>
                         <TextBlock Text="{Binding Balance}" Foreground="#0EA5E9" FontSize="22" FontWeight="Bold" Margin="0,6,0,0"/>
                         <TextBlock Text="{Binding BalanceChangeText}" Foreground="{StaticResource SecondaryTextBrush}" FontSize="11" Margin="0,8,0,0"/>
                     </StackPanel>
@@ -146,7 +146,7 @@
                         <ColumnDefinition Width="Auto"/>
                     </Grid.ColumnDefinitions>
                     <StackPanel>
-                        <TextBlock Text="Xu hướng thu chi" Style="{StaticResource ReportSectionTitle}"/>
+                        <TextBlock Text="{DynamicResource CashFlowTrendTitle}" Style="{StaticResource ReportSectionTitle}"/>
                         <TextBlock Text="{Binding CashFlowChartSummary}"
                                    Foreground="{StaticResource SecondaryTextBrush}"
                                    FontSize="12"
@@ -155,11 +155,11 @@
                     <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
                         <StackPanel Orientation="Horizontal" Margin="0,0,16,0">
                             <Ellipse Width="10" Height="10" Fill="#10B981" VerticalAlignment="Center" Margin="0,0,6,0"/>
-                            <TextBlock Text="Thu nhập" Foreground="{StaticResource SecondaryTextBrush}" FontSize="12"/>
+                            <TextBlock Text="{DynamicResource IncomeTypeText}" Foreground="{StaticResource SecondaryTextBrush}" FontSize="12"/>
                         </StackPanel>
                         <StackPanel Orientation="Horizontal">
                             <Ellipse Width="10" Height="10" Fill="#FB7185" VerticalAlignment="Center" Margin="0,0,6,0"/>
-                            <TextBlock Text="Chi tiêu" Foreground="{StaticResource SecondaryTextBrush}" FontSize="12"/>
+                            <TextBlock Text="{DynamicResource ExpenseTypeText}" Foreground="{StaticResource SecondaryTextBrush}" FontSize="12"/>
                         </StackPanel>
                     </StackPanel>
                 </Grid>
@@ -184,10 +184,10 @@
 
             <Border Grid.Column="0" Style="{StaticResource ReportCard}">
                 <StackPanel>
-                    <TextBlock Text="Phân bổ chi tiêu theo danh mục" Style="{StaticResource ReportSectionTitle}" Margin="0,0,0,10"/>
+                    <TextBlock Text="{DynamicResource CategoryExpenseDistributionTitle}" Style="{StaticResource ReportSectionTitle}" Margin="0,0,0,10"/>
                     <Grid Height="215">
                         <lvc:PieChart Series="{Binding CategorySeries}" LegendPosition="Right"/>
-                        <TextBlock Text="Chưa có dữ liệu chi tiêu."
+                        <TextBlock Text="{DynamicResource DashboardNoExpenseDataText}"
                                    Foreground="{StaticResource SecondaryTextBrush}"
                                    HorizontalAlignment="Center"
                                    VerticalAlignment="Center">
@@ -208,7 +208,7 @@
 
             <Border Grid.Column="2" Style="{StaticResource ReportCard}">
                 <StackPanel>
-                    <TextBlock Text="Chi tiêu hàng ngày" Style="{StaticResource ReportSectionTitle}" Margin="0,0,0,10"/>
+                    <TextBlock Text="{DynamicResource DailyExpenseTitle}" Style="{StaticResource ReportSectionTitle}" Margin="0,0,0,10"/>
                     <lvc:CartesianChart Height="215"
                                         Series="{Binding DailyExpenseSeries}"
                                         XAxes="{Binding DailyXAxes}"
@@ -219,7 +219,7 @@
 
         <Border Style="{StaticResource ReportCard}">
             <StackPanel>
-                <TextBlock Text="Nhận xét &amp; đề xuất" Style="{StaticResource ReportSectionTitle}" Margin="0,0,0,12"/>
+                <TextBlock Text="{DynamicResource InsightsTitle}" Style="{StaticResource ReportSectionTitle}" Margin="0,0,0,12"/>
                 <Grid>
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="*"/>
@@ -229,14 +229,14 @@
 
                     <Border Grid.Column="0" Background="#ECFDF5" BorderBrush="#A7F3D0" BorderThickness="1" CornerRadius="12" Padding="13">
                         <StackPanel>
-                            <TextBlock Text="Điểm tốt" Foreground="#059669" FontWeight="SemiBold" FontSize="12"/>
+                            <TextBlock Text="{DynamicResource PositiveInsightTitle}" Foreground="#059669" FontWeight="SemiBold" FontSize="12"/>
                             <TextBlock Text="{Binding PositiveInsight}" Foreground="#047857" FontSize="11" TextWrapping="Wrap" Margin="0,5,0,0"/>
                         </StackPanel>
                     </Border>
 
                     <Border Grid.Column="2" Background="#FFF7ED" BorderBrush="#FED7AA" BorderThickness="1" CornerRadius="12" Padding="13">
                         <StackPanel>
-                            <TextBlock Text="Cần chú ý" Foreground="#EA580C" FontWeight="SemiBold" FontSize="12"/>
+                            <TextBlock Text="{DynamicResource WarningInsightTitle}" Foreground="#EA580C" FontWeight="SemiBold" FontSize="12"/>
                             <TextBlock Text="{Binding WarningInsight}" Foreground="#C2410C" FontSize="11" TextWrapping="Wrap" Margin="0,5,0,0"/>
                         </StackPanel>
                     </Border>
@@ -245,3 +245,4 @@
         </Border>
     </StackPanel>
 </UserControl>
+

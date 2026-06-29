@@ -1,4 +1,4 @@
-using System.Windows.Input;
+﻿using System.Windows.Input;
 using QuanLyTaiChinhCaNhan_Nhom06.Helpers;
 
 namespace QuanLyTaiChinhCaNhan_Nhom06.Commands
@@ -31,7 +31,7 @@ namespace QuanLyTaiChinhCaNhan_Nhom06.Commands
             catch (Exception ex)
             {
                 AppLogger.Log(ex);
-                DialogHelper.Error($"Có lỗi xảy ra: {ex.Message}");
+                DialogHelper.Error(DialogHelper.Format("GenericErrorFormat", ex.Message));
             }
             finally
             {
@@ -45,3 +45,4 @@ namespace QuanLyTaiChinhCaNhan_Nhom06.Commands
         public void RaiseCanExecuteChanged() => CanExecuteChanged?.Invoke(this, EventArgs.Empty);
     }
 }
+

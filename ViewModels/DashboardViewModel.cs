@@ -15,15 +15,16 @@ namespace QuanLyTaiChinhCaNhan_Nhom06.ViewModels
     {
         private readonly IReportService _reportService;
         private readonly IBudgetService _budgetService;
+        private readonly IAppearanceService _appearanceService;
         private readonly ISessionContext _sessionContext;
         private string _totalIncome = "0 ₫";
         private string _totalExpense = "0 ₫";
         private string _balance = "0 ₫";
         private string _savings = "0 ₫";
-        private string _incomeChangeText = "Chưa có dữ liệu kỳ trước";
-        private string _expenseChangeText = "Chưa có dữ liệu kỳ trước";
-        private string _balanceChangeText = "Thu nhập trừ chi tiêu";
-        private string _savingsChangeText = "Tỷ lệ tiết kiệm hiện tại";
+        private string _incomeChangeText = string.Empty;
+        private string _expenseChangeText = string.Empty;
+        private string _balanceChangeText = string.Empty;
+        private string _savingsChangeText = string.Empty;
         private bool _hasTransactions;
         private bool _hasExpenseChart;
         private bool _hasBudgets;
@@ -37,11 +38,16 @@ namespace QuanLyTaiChinhCaNhan_Nhom06.ViewModels
         private string _cashFlowMaxLabel = "0";
         private string _cashFlowMidLabel = "0";
 
-        public DashboardViewModel(IReportService reportService, IBudgetService budgetService, ISessionContext sessionContext)
+        public DashboardViewModel(IReportService reportService, IBudgetService budgetService, IAppearanceService appearanceService, ISessionContext sessionContext)
         {
             _reportService = reportService;
             _budgetService = budgetService;
+            _appearanceService = appearanceService;
             _sessionContext = sessionContext;
+            IncomeChangeText = _appearanceService.T("NoPreviousPeriodText");
+            ExpenseChangeText = _appearanceService.T("NoPreviousPeriodText");
+            BalanceChangeText = _appearanceService.T("BalanceDescriptionText");
+            SavingsChangeText = _appearanceService.T("SavingsRateText");
             RecentTransactions = new ObservableCollection<DashboardTransactionItem>();
             Budgets = new ObservableCollection<DashboardBudgetItem>();
             CashFlowItems = new ObservableCollection<DashboardCashFlowItem>();
@@ -72,6 +78,11 @@ namespace QuanLyTaiChinhCaNhan_Nhom06.ViewModels
         public string CashFlowMaxLabel { get => _cashFlowMaxLabel; set => SetProperty(ref _cashFlowMaxLabel, value); }
         public string CashFlowMidLabel { get => _cashFlowMidLabel; set => SetProperty(ref _cashFlowMidLabel, value); }
 
+        public override void RefreshLocalization()
+        {
+            _ = RunSafeAsync(LoadAsync);
+        }
+
         private async Task LoadAsync()
         {
             var userId = _sessionContext.CurrentUserId ?? 0;
@@ -80,10 +91,10 @@ namespace QuanLyTaiChinhCaNhan_Nhom06.ViewModels
             TotalExpense = DashboardPresentation.FormatMoney(summary.TotalExpense);
             Balance = DashboardPresentation.FormatMoney(summary.TotalBalance);
             Savings = DashboardPresentation.FormatMoney(Math.Max(0, summary.MonthlyIncome - summary.MonthlyExpense));
-            IncomeChangeText = DashboardPresentation.FormatChange(summary.IncomeChangePercent, "so với tháng trước");
-            ExpenseChangeText = DashboardPresentation.FormatChange(summary.ExpenseChangePercent, "so với tháng trước");
-            BalanceChangeText = "Tổng thu trừ tổng chi";
-            SavingsChangeText = $"{summary.SavingsRate:+0.##;-0.##;0}% tỷ lệ tiết kiệm";
+            IncomeChangeText = DashboardPresentation.FormatChange(summary.IncomeChangePercent, _appearanceService.T("ComparedWithLastMonthText"));
+            ExpenseChangeText = DashboardPresentation.FormatChange(summary.ExpenseChangePercent, _appearanceService.T("ComparedWithLastMonthText"));
+            BalanceChangeText = _appearanceService.T("BalanceDescriptionText");
+            SavingsChangeText = $"{summary.SavingsRate:+0.##;-0.##;0}% {_appearanceService.T("SavingsRateText")}";
 
             var now = DateTime.Now;
             var monthStart = DateTimeHelper.StartOfMonth(now);
@@ -92,13 +103,13 @@ namespace QuanLyTaiChinhCaNhan_Nhom06.ViewModels
             RecentTransactions.Clear();
             var transactions = await _reportService.GetTransactionsAsync(userId, monthStart, monthEnd);
             foreach (var transaction in transactions.Take(5))
-                RecentTransactions.Add(new DashboardTransactionItem(transaction));
+                RecentTransactions.Add(new DashboardTransactionItem(transaction, _appearanceService));
             HasTransactions = RecentTransactions.Any();
 
             var categories = await _reportService.GetCategorySpendingAsync(userId, monthStart, monthEnd);
             ExpenseSeries = categories.Take(6).Select(category => new PieSeries<double>
             {
-                Name = category.CategoryName,
+                Name = _appearanceService.LocalizeCategoryName(category.CategoryName, TransactionType.Expense),
                 Values = new[] { (double)category.Amount },
                 Fill = new SolidColorPaint(DashboardPresentation.ParseColor(category.Color)),
                 InnerRadius = 62,
@@ -118,7 +129,7 @@ namespace QuanLyTaiChinhCaNhan_Nhom06.ViewModels
             CashFlowMidLabel = DashboardPresentation.FormatChartMoney(chartMax / 2);
             CashFlowItems.Clear();
             foreach (var point in cashFlow)
-                CashFlowItems.Add(new DashboardCashFlowItem(point.Label, point.Income, point.Expense, chartMax));
+                CashFlowItems.Add(new DashboardCashFlowItem(point.Label, point.Income, point.Expense, chartMax, _appearanceService));
 
             CashFlowXAxes = new[]
             {
@@ -152,7 +163,7 @@ namespace QuanLyTaiChinhCaNhan_Nhom06.ViewModels
             {
                 new ColumnSeries<double>
                 {
-                    Name = "Thu",
+                    Name = _appearanceService.LocalizeTransactionType(TransactionType.Income),
                     Values = cashFlow.Select(point => (double)point.Income).ToArray(),
                     Fill = new SolidColorPaint(SKColor.Parse("#10B981")),
                     Stroke = null,
@@ -163,7 +174,7 @@ namespace QuanLyTaiChinhCaNhan_Nhom06.ViewModels
                 },
                 new ColumnSeries<double>
                 {
-                    Name = "Chi",
+                    Name = _appearanceService.LocalizeTransactionType(TransactionType.Expense),
                     Values = cashFlow.Select(point => (double)point.Expense).ToArray(),
                     Fill = new SolidColorPaint(SKColor.Parse("#FB7185")),
                     Stroke = null,
@@ -177,7 +188,7 @@ namespace QuanLyTaiChinhCaNhan_Nhom06.ViewModels
             Budgets.Clear();
             var budgets = await _budgetService.GetBudgetsAsync(userId);
             foreach (var budget in budgets.Where(item => item.IsActive).Take(5))
-                Budgets.Add(new DashboardBudgetItem(budget));
+                Budgets.Add(new DashboardBudgetItem(budget, _appearanceService));
             HasBudgets = Budgets.Any();
 
             var budgetAlerts = await _budgetService.CheckBudgetAlertsAsync(userId);
@@ -190,11 +201,11 @@ namespace QuanLyTaiChinhCaNhan_Nhom06.ViewModels
 
     public class DashboardTransactionItem
     {
-        public DashboardTransactionItem(Transaction transaction)
+        public DashboardTransactionItem(Transaction transaction, IAppearanceService appearanceService)
         {
             Description = transaction.Description;
-            CategoryName = transaction.Category?.Name ?? "Chưa phân loại";
-            DateText = transaction.Date.ToString("dd/MM/yyyy");
+            CategoryName = appearanceService.LocalizeCategoryName(transaction.Category?.Name, transaction.Category?.Type);
+            DateText = transaction.Date.ToString("d", CultureInfo.CurrentCulture);
             var isIncome = transaction.Type == TransactionType.Income;
             AmountText = $"{(isIncome ? "+" : "-")}{DashboardPresentation.FormatMoney(transaction.Amount)}";
             AccentBrush = DashboardPresentation.CreateBrush(isIncome ? "#10B981" : "#EF4444");
@@ -213,11 +224,11 @@ namespace QuanLyTaiChinhCaNhan_Nhom06.ViewModels
 
     public class DashboardBudgetItem
     {
-        public DashboardBudgetItem(Budget budget)
+        public DashboardBudgetItem(Budget budget, IAppearanceService appearanceService)
         {
-            Name = budget.Category?.Name ?? budget.Name;
+            Name = budget.Category == null ? budget.Name : appearanceService.LocalizeCategoryName(budget.Category.Name, budget.Category.Type);
             AmountText = $"{DashboardPresentation.FormatMoney(budget.SpentAmount)} / {DashboardPresentation.FormatMoney(budget.Amount)}";
-            ProgressText = $"{budget.UsedPercent:N0}% đã sử dụng";
+            ProgressText = appearanceService.Format("UsedPercentFormat", budget.UsedPercent);
             UsedPercent = budget.UsedPercent;
             ProgressBrush = DashboardPresentation.CreateBrush(
                 budget.UsedPercent >= 100 ? "#EF4444" : budget.UsedPercent >= 80 ? "#F59E0B" : "#10B981");
@@ -234,15 +245,15 @@ namespace QuanLyTaiChinhCaNhan_Nhom06.ViewModels
     {
         private const double ChartHeight = 180;
 
-        public DashboardCashFlowItem(string label, decimal income, decimal expense, double maxAmount)
+        public DashboardCashFlowItem(string label, decimal income, decimal expense, double maxAmount, IAppearanceService appearanceService)
         {
             Label = label;
             IncomeBarHeight = CalculateBarHeight(income, maxAmount);
             ExpenseBarHeight = CalculateBarHeight(expense, maxAmount);
             IncomeAmountText = DashboardPresentation.FormatMoney(income);
             ExpenseAmountText = DashboardPresentation.FormatMoney(expense);
-            IncomeTooltip = $"{Label}\nThu: {IncomeAmountText}";
-            ExpenseTooltip = $"{Label}\nChi: {ExpenseAmountText}";
+            IncomeTooltip = $"{Label}\n{appearanceService.LocalizeTransactionType(TransactionType.Income)}: {IncomeAmountText}";
+            ExpenseTooltip = $"{Label}\n{appearanceService.LocalizeTransactionType(TransactionType.Expense)}: {ExpenseAmountText}";
         }
 
         public string Label { get; }
@@ -267,7 +278,7 @@ namespace QuanLyTaiChinhCaNhan_Nhom06.ViewModels
     {
         public static string FormatMoney(decimal amount)
         {
-            return string.Format(CultureInfo.GetCultureInfo("vi-VN"), "{0:N0} ₫", amount);
+            return string.Format(CultureInfo.CurrentCulture, "{0:N0} ₫", amount);
         }
 
         public static string FormatChange(decimal percentage, string suffix)
@@ -322,3 +333,6 @@ namespace QuanLyTaiChinhCaNhan_Nhom06.ViewModels
         }
     }
 }
+
+
+

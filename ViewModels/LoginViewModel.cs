@@ -9,14 +9,16 @@ namespace QuanLyTaiChinhCaNhan_Nhom06.ViewModels
     {
         private readonly IAuthenticationService _authService;
         private readonly MainViewModel _mainViewModel;
+        private readonly IAppearanceService _appearanceService;
         private string _username = string.Empty;
         private string _password = string.Empty;
         private string _message = string.Empty;
 
-        public LoginViewModel(IAuthenticationService authService, MainViewModel mainViewModel)
+        public LoginViewModel(IAuthenticationService authService, MainViewModel mainViewModel, IAppearanceService appearanceService)
         {
             _authService = authService;
             _mainViewModel = mainViewModel;
+            _appearanceService = appearanceService;
             LoginCommand = new AsyncRelayCommand(_ => LoginAsync());
             ShowRegisterCommand = new RelayCommand(_ => _mainViewModel.ShowRegister());
         }
@@ -31,7 +33,7 @@ namespace QuanLyTaiChinhCaNhan_Nhom06.ViewModels
         {
             if (!Validator.Required(Username) || !Validator.Required(Password))
             {
-                Message = "Vui lòng nhập tên đăng nhập và mật khẩu.";
+                Message = _appearanceService.T("RequiredLoginMessage");
                 return;
             }
 
@@ -42,8 +44,9 @@ namespace QuanLyTaiChinhCaNhan_Nhom06.ViewModels
                 return;
             }
 
-            Message = "Tên đăng nhập hoặc mật khẩu không đúng.";
+            Message = _appearanceService.T("InvalidLoginMessage");
         }
     }
 }
+
 

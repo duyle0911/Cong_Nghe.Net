@@ -13,6 +13,7 @@ namespace QuanLyTaiChinhCaNhan_Nhom06.ViewModels
     {
         private readonly ITransactionService _transactionService;
         private readonly ICategoryService _categoryService;
+        private readonly IAppearanceService _appearanceService;
         private readonly ISessionContext _sessionContext;
         private readonly List<Transaction> _loadedTransactions = new();
         private Transaction? _selectedTransaction;
@@ -28,22 +29,32 @@ namespace QuanLyTaiChinhCaNhan_Nhom06.ViewModels
         private bool _isQuickCategoryOpen;
         private string _newCategoryName = string.Empty;
         private string _newCategoryColor = "#0EA5E9";
+        private bool _isSyncingNewCategoryColorChannels;
+        private double _newCategoryColorRed = 14;
+        private double _newCategoryColorGreen = 165;
+        private double _newCategoryColorBlue = 233;
         private string _newCategoryIcon = "Shape";
-        private string _editorTitle = "Thêm giao dịch";
-        private string _filteredCountText = "Hiển thị 0 / 0 giao dịch";
+        private string _editorTitle = string.Empty;
+        private string _filteredCountText = string.Empty;
 
         public TransactionViewModel(
             ITransactionService transactionService,
             ICategoryService categoryService,
+            IAppearanceService appearanceService,
             ISessionContext sessionContext)
         {
             _transactionService = transactionService;
             _categoryService = categoryService;
+            _appearanceService = appearanceService;
             _sessionContext = sessionContext;
+            EditorTitle = _appearanceService.T("AddTransactionTitle");
+            FilteredCountText = _appearanceService.Format("FilteredCountFormat", 0, 0);
 
             Transactions = new ObservableCollection<Transaction>();
             TransactionItems = new ObservableCollection<TransactionListItem>();
             Categories = new ObservableCollection<Category>();
+            TypeOptions = new ObservableCollection<TransactionTypeOption>();
+            RefreshTypeOptions();
 
             SaveCommand = new AsyncRelayCommand(_ => SaveAsync());
             DeleteCommand = new AsyncRelayCommand(_ => DeleteSelectedAsync(), _ => SelectedTransaction != null);
@@ -62,7 +73,8 @@ namespace QuanLyTaiChinhCaNhan_Nhom06.ViewModels
         public ObservableCollection<Transaction> Transactions { get; }
         public ObservableCollection<TransactionListItem> TransactionItems { get; }
         public ObservableCollection<Category> Categories { get; }
-        public Array Types => Enum.GetValues(typeof(TransactionType));
+        public ObservableCollection<TransactionTypeOption> TypeOptions { get; }
+        public System.Collections.Generic.IReadOnlyList<ColorPaletteOption> ColorPaletteOptions => ColorPalette.Options;
 
         public Transaction? SelectedTransaction
         {
@@ -78,7 +90,62 @@ namespace QuanLyTaiChinhCaNhan_Nhom06.ViewModels
         public bool IsEditorOpen { get => _isEditorOpen; set => SetProperty(ref _isEditorOpen, value); }
         public bool IsQuickCategoryOpen { get => _isQuickCategoryOpen; set => SetProperty(ref _isQuickCategoryOpen, value); }
         public string NewCategoryName { get => _newCategoryName; set => SetProperty(ref _newCategoryName, value); }
-        public string NewCategoryColor { get => _newCategoryColor; set => SetProperty(ref _newCategoryColor, value); }
+        public string NewCategoryColor
+        {
+            get => _newCategoryColor;
+            set
+            {
+                var normalized = ColorPalette.Normalize(value, "#0EA5E9");
+                if (!SetProperty(ref _newCategoryColor, normalized))
+                    return;
+
+                SyncNewCategoryColorChannels(normalized);
+                OnPropertyChanged(nameof(NewCategoryColorPreviewBrush));
+                OnPropertyChanged(nameof(SelectedNewCategoryPaletteColor));
+            }
+        }
+
+        public string? SelectedNewCategoryPaletteColor
+        {
+            get => ColorPalette.IsPaletteColor(NewCategoryColor) ? NewCategoryColor : null;
+            set
+            {
+                if (!string.IsNullOrWhiteSpace(value))
+                    NewCategoryColor = value;
+            }
+        }
+
+        public Brush NewCategoryColorPreviewBrush => ColorPalette.CreateBrush(NewCategoryColor, "#0EA5E9");
+
+        public double NewCategoryColorRed
+        {
+            get => _newCategoryColorRed;
+            set
+            {
+                if (SetProperty(ref _newCategoryColorRed, value))
+                    UpdateNewCategoryColorFromChannels();
+            }
+        }
+
+        public double NewCategoryColorGreen
+        {
+            get => _newCategoryColorGreen;
+            set
+            {
+                if (SetProperty(ref _newCategoryColorGreen, value))
+                    UpdateNewCategoryColorFromChannels();
+            }
+        }
+
+        public double NewCategoryColorBlue
+        {
+            get => _newCategoryColorBlue;
+            set
+            {
+                if (SetProperty(ref _newCategoryColorBlue, value))
+                    UpdateNewCategoryColorFromChannels();
+            }
+        }
         public string NewCategoryIcon { get => _newCategoryIcon; set => SetProperty(ref _newCategoryIcon, value); }
         public string EditorTitle { get => _editorTitle; set => SetProperty(ref _editorTitle, value); }
         public string FilteredCountText { get => _filteredCountText; set => SetProperty(ref _filteredCountText, value); }
@@ -132,6 +199,37 @@ namespace QuanLyTaiChinhCaNhan_Nhom06.ViewModels
         public ICommand CancelQuickCategoryCommand { get; }
         public ICommand CreateQuickCategoryCommand { get; }
 
+        private void UpdateNewCategoryColorFromChannels()
+        {
+            if (_isSyncingNewCategoryColorChannels)
+                return;
+
+            NewCategoryColor = ColorPalette.ToHex(NewCategoryColorRed, NewCategoryColorGreen, NewCategoryColorBlue);
+        }
+
+        private void SyncNewCategoryColorChannels(string? value)
+        {
+            if (!ColorPalette.TryParseColor(value, out var parsed))
+                return;
+
+            _isSyncingNewCategoryColorChannels = true;
+            NewCategoryColorRed = parsed.R;
+            NewCategoryColorGreen = parsed.G;
+            NewCategoryColorBlue = parsed.B;
+            _isSyncingNewCategoryColorChannels = false;
+        }
+        public override void RefreshLocalization()
+        {
+            RefreshTypeOptions();
+            _ = RunSafeAsync(LoadAsync);
+        }
+
+        private void RefreshTypeOptions()
+        {
+            TypeOptions.Clear();
+            TypeOptions.Add(new TransactionTypeOption(TransactionType.Income, _appearanceService.LocalizeTransactionType(TransactionType.Income)));
+            TypeOptions.Add(new TransactionTypeOption(TransactionType.Expense, _appearanceService.LocalizeTransactionType(TransactionType.Expense)));
+        }
         private async Task LoadAsync()
         {
             await LoadCategoriesAsync();
@@ -163,11 +261,11 @@ namespace QuanLyTaiChinhCaNhan_Nhom06.ViewModels
             foreach (var transaction in items)
             {
                 Transactions.Add(transaction);
-                TransactionItems.Add(new TransactionListItem(transaction));
+                TransactionItems.Add(new TransactionListItem(transaction, _appearanceService));
             }
 
             HasTransactions = TransactionItems.Any();
-            FilteredCountText = $"Hiển thị {TransactionItems.Count} / {_loadedTransactions.Count} giao dịch";
+            FilteredCountText = _appearanceService.Format("FilteredCountFormat", TransactionItems.Count, _loadedTransactions.Count);
         }
 
         private async Task LoadCategoriesAsync(int? selectedCategoryId = null)
@@ -175,7 +273,10 @@ namespace QuanLyTaiChinhCaNhan_Nhom06.ViewModels
             var categoryId = selectedCategoryId ?? SelectedCategory?.Id;
             Categories.Clear();
             foreach (var category in await _categoryService.GetCategoriesAsync(_sessionContext.CurrentUserId ?? 0, Type))
+            {
+                category.DisplayName = _appearanceService.LocalizeCategoryName(category.Name, category.Type);
                 Categories.Add(category);
+            }
             SelectedCategory = Categories.FirstOrDefault(category => category.Id == categoryId);
         }
 
@@ -183,19 +284,19 @@ namespace QuanLyTaiChinhCaNhan_Nhom06.ViewModels
         {
             if (!Validator.Required(Description))
             {
-                DialogHelper.Error("Vui lòng nhập mô tả giao dịch.");
+                DialogHelper.Error(_appearanceService.T("TransactionDescriptionRequired"));
                 return;
             }
 
             if (Amount <= 0)
             {
-                DialogHelper.Error("Số tiền phải lớn hơn 0.");
+                DialogHelper.Error(_appearanceService.T("AmountGreaterThanZero"));
                 return;
             }
 
             if (SelectedCategory == null)
             {
-                DialogHelper.Error("Vui lòng chọn danh mục.");
+                DialogHelper.Error(_appearanceService.T("CategoryRequired"));
                 return;
             }
 
@@ -243,7 +344,7 @@ namespace QuanLyTaiChinhCaNhan_Nhom06.ViewModels
 
         private async Task DeleteAsync(Transaction transaction)
         {
-            if (!DialogHelper.Confirm($"Xóa giao dịch '{transaction.Description}'?"))
+            if (!DialogHelper.Confirm(_appearanceService.Format("DeleteTransactionConfirmFormat", transaction.Description)))
                 return;
 
             var result = await _transactionService.DeleteTransactionAsync(
@@ -277,14 +378,14 @@ namespace QuanLyTaiChinhCaNhan_Nhom06.ViewModels
             }
 
             await LoadCategoriesAsync(transaction.CategoryId);
-            EditorTitle = "Chỉnh sửa giao dịch";
+            EditorTitle = _appearanceService.T("EditTransactionTitle");
             IsEditorOpen = true;
         }
 
         private void OpenNewEditor()
         {
             ClearForm();
-            EditorTitle = "Thêm giao dịch";
+            EditorTitle = _appearanceService.T("AddTransactionTitle");
             IsEditorOpen = true;
         }
 
@@ -330,13 +431,13 @@ namespace QuanLyTaiChinhCaNhan_Nhom06.ViewModels
         {
             if (!Validator.Required(NewCategoryName))
             {
-                DialogHelper.Error("Vui lòng nhập tên danh mục.");
+                DialogHelper.Error(_appearanceService.T("CategoryNameRequired"));
                 return;
             }
 
             if (!IsValidColor(NewCategoryColor))
             {
-                DialogHelper.Error("Màu sắc phải có định dạng #RRGGBB, ví dụ #0EA5E9.");
+                DialogHelper.Error(_appearanceService.T("InvalidColorMessage"));
                 return;
             }
 
@@ -352,7 +453,7 @@ namespace QuanLyTaiChinhCaNhan_Nhom06.ViewModels
             var ok = await _categoryService.CreateCategoryAsync(category, userId);
             if (!ok)
             {
-                DialogHelper.Error("Không thể thêm danh mục. Tên danh mục có thể đã tồn tại.");
+                DialogHelper.Error(_appearanceService.T("CategorySaveFailed"));
                 return;
             }
 
@@ -370,13 +471,13 @@ namespace QuanLyTaiChinhCaNhan_Nhom06.ViewModels
 
     public class TransactionListItem
     {
-        public TransactionListItem(Transaction transaction)
+        public TransactionListItem(Transaction transaction, IAppearanceService appearanceService)
         {
             Transaction = transaction;
-            DateText = transaction.Date.ToString("dd/MM/yyyy");
+            DateText = transaction.Date.ToString("d", CultureInfo.CurrentCulture);
             Description = transaction.Description;
-            CategoryName = transaction.Category?.Name ?? "Chưa phân loại";
-            TypeText = transaction.Type == TransactionType.Income ? "Thu nhập" : "Chi tiêu";
+            CategoryName = appearanceService.LocalizeCategoryName(transaction.Category?.Name, transaction.Category?.Type);
+            TypeText = appearanceService.LocalizeTransactionType(transaction.Type);
             AmountText = $"{(transaction.Type == TransactionType.Income ? "+" : "-")}{DashboardPresentation.FormatMoney(transaction.Amount)}";
             IconText = transaction.Type == TransactionType.Income ? "↗" : "↘";
             AmountBrush = CreateBrush(transaction.Type == TransactionType.Income ? "#059669" : "#EF4444");
@@ -417,3 +518,6 @@ namespace QuanLyTaiChinhCaNhan_Nhom06.ViewModels
         }
     }
 }
+
+
+

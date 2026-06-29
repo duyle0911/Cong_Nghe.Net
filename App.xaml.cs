@@ -66,7 +66,7 @@ namespace QuanLyTaiChinhCaNhan_Nhom06
             catch (Exception ex)
             {
                 AppLogger.Log(ex);
-                DialogHelper.Error("Không thể kết nối hoặc cập nhật CSDL. Vui lòng kiểm tra SQL Server/LocalDB rồi mở lại ứng dụng.");
+                DialogHelper.Error(DialogHelper.Text("DatabaseConnectionError"));
                 Shutdown();
                 return;
             }
@@ -81,7 +81,7 @@ namespace QuanLyTaiChinhCaNhan_Nhom06
         private void OnDispatcherUnhandledException(object sender, DispatcherUnhandledExceptionEventArgs e)
         {
             AppLogger.Log(e.Exception);
-            DialogHelper.Error($"Ứng dụng gặp lỗi khi xử lý màn hình: {e.Exception.Message}");
+            DialogHelper.Error(DialogHelper.Format("UnhandledUiErrorFormat", e.Exception.Message));
             e.Handled = true;
         }
 
@@ -100,3 +100,4 @@ namespace QuanLyTaiChinhCaNhan_Nhom06
         }
     }
 }
+

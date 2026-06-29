@@ -1,4 +1,4 @@
-﻿using System.ComponentModel;
+using System.ComponentModel;
 using System.Runtime.CompilerServices;
 
 namespace QuanLyTaiChinhCaNhan_Nhom06.ViewModels
@@ -22,6 +22,10 @@ namespace QuanLyTaiChinhCaNhan_Nhom06.ViewModels
             return true;
         }
 
+        public virtual void RefreshLocalization()
+        {
+        }
+
         protected async Task RunSafeAsync(Func<Task> action)
         {
             try
@@ -31,9 +35,10 @@ namespace QuanLyTaiChinhCaNhan_Nhom06.ViewModels
             catch (Exception ex)
             {
                 Helpers.AppLogger.Log(ex);
-                Helpers.DialogHelper.Error($"Không thể tải dữ liệu màn hình: {ex.Message}");
+                Helpers.DialogHelper.Error(Helpers.DialogHelper.Format("LoadScreenErrorFormat", ex.Message));
             }
         }
     }
 }
+
 

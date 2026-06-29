@@ -1,4 +1,4 @@
-﻿using System.Windows;
+using System.Windows;
 using System.Windows.Controls;
 using QuanLyTaiChinhCaNhan_Nhom06.ViewModels;
 
@@ -14,6 +14,7 @@ namespace QuanLyTaiChinhCaNhan_Nhom06.Views
         public RegisterView()
         {
             InitializeComponent();
+            RefreshPasswordPlaceholders();
         }
 
         private void PasswordBox_PasswordChanged(object sender, RoutedEventArgs e)
@@ -21,8 +22,7 @@ namespace QuanLyTaiChinhCaNhan_Nhom06.Views
             if (_isSyncingPassword)
                 return;
 
-            if (DataContext is RegisterViewModel viewModel &&
-                sender is PasswordBox passwordBox)
+            if (DataContext is RegisterViewModel viewModel && sender is PasswordBox passwordBox)
             {
                 viewModel.Password = passwordBox.Password;
 
@@ -33,6 +33,8 @@ namespace QuanLyTaiChinhCaNhan_Nhom06.Views
                     _isSyncingPassword = false;
                 }
             }
+
+            RefreshPasswordPlaceholders();
         }
 
         private void ConfirmPasswordBox_PasswordChanged(object sender, RoutedEventArgs e)
@@ -40,8 +42,7 @@ namespace QuanLyTaiChinhCaNhan_Nhom06.Views
             if (_isSyncingConfirmPassword)
                 return;
 
-            if (DataContext is RegisterViewModel viewModel &&
-                sender is PasswordBox passwordBox)
+            if (DataContext is RegisterViewModel viewModel && sender is PasswordBox passwordBox)
             {
                 viewModel.ConfirmPassword = passwordBox.Password;
 
@@ -52,6 +53,8 @@ namespace QuanLyTaiChinhCaNhan_Nhom06.Views
                     _isSyncingConfirmPassword = false;
                 }
             }
+
+            RefreshPasswordPlaceholders();
         }
 
         private void VisiblePasswordInput_TextChanged(object sender, TextChangedEventArgs e)
@@ -70,6 +73,8 @@ namespace QuanLyTaiChinhCaNhan_Nhom06.Views
                     _isSyncingPassword = false;
                 }
             }
+
+            RefreshPasswordPlaceholders();
         }
 
         private void VisibleConfirmPasswordInput_TextChanged(object sender, TextChangedEventArgs e)
@@ -88,6 +93,8 @@ namespace QuanLyTaiChinhCaNhan_Nhom06.Views
                     _isSyncingConfirmPassword = false;
                 }
             }
+
+            RefreshPasswordPlaceholders();
         }
 
         private void TogglePasswordVisibility_Click(object sender, RoutedEventArgs e)
@@ -115,6 +122,8 @@ namespace QuanLyTaiChinhCaNhan_Nhom06.Views
                 PasswordInput.Visibility = Visibility.Visible;
                 PasswordInput.Focus();
             }
+
+            RefreshPasswordPlaceholders();
         }
 
         private void ToggleConfirmPasswordVisibility_Click(object sender, RoutedEventArgs e)
@@ -142,7 +151,16 @@ namespace QuanLyTaiChinhCaNhan_Nhom06.Views
                 ConfirmPasswordInput.Visibility = Visibility.Visible;
                 ConfirmPasswordInput.Focus();
             }
+
+            RefreshPasswordPlaceholders();
         }
 
+        private void RefreshPasswordPlaceholders()
+        {
+            var passwordText = _isPasswordVisible ? VisiblePasswordInput.Text : PasswordInput.Password;
+            var confirmText = _isConfirmPasswordVisible ? VisibleConfirmPasswordInput.Text : ConfirmPasswordInput.Password;
+            PasswordPlaceholder.Visibility = string.IsNullOrEmpty(passwordText) ? Visibility.Visible : Visibility.Collapsed;
+            ConfirmPasswordPlaceholder.Visibility = string.IsNullOrEmpty(confirmText) ? Visibility.Visible : Visibility.Collapsed;
+        }
     }
 }

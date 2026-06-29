@@ -7,10 +7,12 @@ namespace QuanLyTaiChinhCaNhan_Nhom06.Services
     public class CategoryService : ICategoryService
     {
         private readonly IDbContextFactory<ExpenseDbContext> _dbFactory;
+        private readonly IAppearanceService _appearanceService;
 
-        public CategoryService(IDbContextFactory<ExpenseDbContext> dbFactory)
+        public CategoryService(IDbContextFactory<ExpenseDbContext> dbFactory, IAppearanceService appearanceService)
         {
             _dbFactory = dbFactory;
+            _appearanceService = appearanceService;
         }
 
         public async Task<List<Category>> GetCategoriesAsync(int userId, TransactionType? type = null)
@@ -118,28 +120,29 @@ namespace QuanLyTaiChinhCaNhan_Nhom06.Services
                     .FirstOrDefaultAsync(c => c.Id == categoryId && c.UserId == userId);
 
                 if (category == null)
-                    return (false, "Không tìm thấy danh mục.");
+                    return (false, _appearanceService.T("NotFoundCategory"));
 
                 var hasTransactions = await context.Transactions
                     .AnyAsync(t => t.CategoryId == categoryId && t.UserId == userId);
 
                 if (hasTransactions)
-                    return (false, "Không thể xóa danh mục đã có giao dịch.");
+                    return (false, _appearanceService.T("CategoryHasTransactions"));
 
                 var hasBudgets = await context.Budgets
                     .AnyAsync(b => b.CategoryId == categoryId && b.UserId == userId);
 
                 if (hasBudgets)
-                    return (false, "Không thể xóa danh mục đang có ngân sách.");
+                    return (false, _appearanceService.T("CategoryHasBudgets"));
 
                 context.Categories.Remove(category);
                 await context.SaveChangesAsync();
-                return (true, "Đã xóa danh mục thành công.");
+                return (true, string.Empty);
             }
             catch (Exception ex)
             {
-                return (false, $"Lỗi khi xóa danh mục: {ex.Message}");
+                return (false, _appearanceService.Format("GenericErrorFormat", ex.Message));
             }
         }
     }
 }
+

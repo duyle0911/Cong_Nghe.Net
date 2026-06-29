@@ -9,6 +9,7 @@ namespace QuanLyTaiChinhCaNhan_Nhom06.ViewModels
     {
         private readonly IAuthenticationService _authService;
         private readonly MainViewModel _mainViewModel;
+        private readonly IAppearanceService _appearanceService;
 
         private string _username = string.Empty;
         private string _email = string.Empty;
@@ -17,10 +18,11 @@ namespace QuanLyTaiChinhCaNhan_Nhom06.ViewModels
         private string _confirmPassword = string.Empty;
         private string _message = string.Empty;
 
-        public RegisterViewModel(IAuthenticationService authService, MainViewModel mainViewModel)
+        public RegisterViewModel(IAuthenticationService authService, MainViewModel mainViewModel, IAppearanceService appearanceService)
         {
             _authService = authService;
             _mainViewModel = mainViewModel;
+            _appearanceService = appearanceService;
 
             RegisterCommand = new AsyncRelayCommand(_ => RegisterAsync());
             ShowLoginCommand = new RelayCommand(_ => _mainViewModel.ShowLogin());
@@ -69,36 +71,36 @@ namespace QuanLyTaiChinhCaNhan_Nhom06.ViewModels
         {
             if (!Validator.Required(Username) || Username.Any(char.IsWhiteSpace))
             {
-                Message = "Tên đăng nhập không được để trống hoặc chứa khoảng trắng.";
+                Message = _appearanceService.T("InvalidUsernameMessage");
                 return;
             }
 
             if (!Validator.Email(Email))
             {
-                Message = "Email không hợp lệ.";
+                Message = _appearanceService.T("InvalidEmailMessage");
                 return;
             }
 
             if (Password.Length < 6)
             {
-                Message = "Mật khẩu phải có ít nhất 6 ký tự.";
+                Message = _appearanceService.T("PasswordTooShortMessage");
                 return;
             }
 
             if (Password != ConfirmPassword)
             {
-                Message = "Mật khẩu xác nhận không khớp.";
+                Message = _appearanceService.T("PasswordMismatchMessage");
                 return;
             }
 
             if (await _authService.RegisterAsync(Username, Email, Password, FullName))
             {
-                Message = "Đăng ký thành công. Hãy đăng nhập.";
+                Message = _appearanceService.T("RegisterSuccessMessage");
                 _mainViewModel.ShowLogin();
                 return;
             }
 
-            Message = "Tên đăng nhập hoặc email đã tồn tại.";
+            Message = _appearanceService.T("RegisterExistsMessage");
         }
     }
 }
