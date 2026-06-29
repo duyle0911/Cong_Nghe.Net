@@ -14,6 +14,7 @@ namespace QuanLyTaiChinhCaNhan_Nhom06.ViewModels
         private readonly ICategoryService _categoryService;
         private readonly IAppearanceService _appearanceService;
         private readonly ISessionContext _sessionContext;
+        private readonly AsyncRelayCommand _deleteCommand;
         private Budget? _selectedBudget;
         private Category? _selectedCategory;
         private decimal _amount;
@@ -39,7 +40,8 @@ namespace QuanLyTaiChinhCaNhan_Nhom06.ViewModels
             BudgetOverviews = new ObservableCollection<BudgetOverview>();
             Categories = new ObservableCollection<Category>();
             SaveCommand = new AsyncRelayCommand(_ => SaveAsync());
-            DeleteCommand = new AsyncRelayCommand(_ => DeleteAsync(), _ => SelectedBudget != null);
+            _deleteCommand = new AsyncRelayCommand(_ => DeleteAsync(), _ => SelectedBudget != null);
+            DeleteCommand = _deleteCommand;
             NewCommand = new RelayCommand(_ => OpenNewEditor());
             CancelCommand = new RelayCommand(_ => CloseEditor());
             EditCommand = new RelayCommand(item => OpenEditor((item as BudgetOverview)?.Budget));
@@ -55,7 +57,12 @@ namespace QuanLyTaiChinhCaNhan_Nhom06.ViewModels
             get => _selectedBudget;
             set
             {
-                if (!SetProperty(ref _selectedBudget, value) || value == null)
+                if (!SetProperty(ref _selectedBudget, value))
+                    return;
+
+                _deleteCommand.RaiseCanExecuteChanged();
+
+                if (value == null)
                     return;
 
                 SelectedCategory = Categories.FirstOrDefault(category => category.Id == value.CategoryId);
