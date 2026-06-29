@@ -86,6 +86,12 @@
 - Biểu đồ hoạt động chức năng cập nhật hồ sơ cá nhân
 ![Activity Cập nhật hồ sơ cá nhân](Resources/images/Accapnhathoso.png)
 ---
+- Biểu đồ hoạt động chức năng quản lý ngân sách
+![Activity Quản lý ngân sách](Resources/images/Acquanlyngansach.png)
+---
+- Biểu đồ hoạt động chức năng quản lý mục tiêu tài chính
+![Activity Quản lý mục tiêu tài chính](Resources/images/Acquanlymuctieu.png)
+---
 ### Sequence Diagram
 - Biểu đồ tuần tự chức năng đăng ký
 ![Tuần tự Đăng ký](Resources/images/TT-dangky.png)
@@ -126,7 +132,12 @@
 - Biểu đồ tuần tự chức năng cập nhật hồ sơ cá nhân
 ![Tuần tự Cập nhật hồ sơ cá nhân](Resources/images/TT-capnhathoso.png)
 ---
-
+- Biểu đồ tuần tự chức năng quản lý ngân sách
+![Tuần tự Quản lý ngân sách](Resources/images/TT-quanlyngansach.png)
+---
+- Biểu đồ tuần tự chức năng quản lý mục tiêu
+![Tuần tự Quản lý mục tiêu tài chính](Resources/images/TT-quanlymuctieu.png)
+---
 
 ## 🔄 Luồng hoạt động của hệ thống
 
